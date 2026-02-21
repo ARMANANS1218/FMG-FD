@@ -1,0 +1,227 @@
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { Menu, Bell, Sun, Moon, Maximize, Minimize, X, Volume2, VolumeX } from "lucide-react";
+import ColorModeContext from "../../context/ColorModeContext";
+import Sidebar from "../common/Sidebar";
+import ProfileCard from "../../pages/private/customer/ProfileCard";
+import { useGetProfileQuery } from "../../features/auth/authApi";
+import { IMG_PROFILE_URL } from "../../config/api";
+import { useNotificationSoundContext } from "../../context/NotificationSoundContext";
+
+const CustomerAppbar = ({ children }) => {
+  const [open, setOpen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const colorMode = useContext(ColorModeContext);
+  const navigate = useNavigate();
+  const { data } = useGetProfileQuery();
+  const { enabled: soundEnabled, setEnabled: setSoundEnabled } = useNotificationSoundContext();
+
+  const role = data?.data?.role;
+  const isDark = document.documentElement.classList.contains("dark");
+
+  // Auto-open sidebar on desktop
+  useEffect(() => {
+    const handleResize = () => setOpen(window.innerWidth >= 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fullscreen functionality
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error("Error toggling fullscreen:", error);
+      toast.error("Failed to toggle fullscreen mode");
+    }
+  };
+
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
+  const handleProfileToggle = () => {
+    setProfileOpen(!profileOpen);
+  };
+
+  const handleSidebarWidthChange = (width) => {
+    setSidebarWidth(width);
+  };
+
+  return (
+    <div className="flex min-h-screen w-screen">
+      {/* Sidebar - responsive, fixed positioning with z-index */}
+      <Sidebar
+        open={open}
+        onClose={() => setOpen(false)}
+        role={role}
+        width={260}
+        onSidebarWidthChange={handleSidebarWidthChange}
+      />
+
+      {/* Main content area - responsive, shrinks with sidebar, uses margin to account for fixed sidebar */}
+      <div className="flex flex-col flex-1 w-full min-h-screen" style={{
+        marginLeft: `${sidebarWidth}px`,
+        width: `calc(100% - ${sidebarWidth}px)`,
+        maxWidth: `calc(100% - ${sidebarWidth}px)`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
+        {/* Header - responsive positioning */}
+        <header
+          className="fixed top-0 h-16 bg-background border-b border-border  flex-shrink-0 shadow-sm"
+          style={{
+            zIndex: 10,
+            width: `calc(100% - ${sidebarWidth}px)`,
+            marginLeft: `${sidebarWidth}px`,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        >
+          <div className="h-full px-3 sm:px-4 md:px-6 flex items-center justify-between gap-3 sm:gap-2">
+            {/* Left: Menu Icon */}
+            <button
+              onClick={handleDrawerToggle}
+              className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors flex-shrink-0 hover:scale-105 active:scale-95"
+              title="Toggle Menu"
+            >
+              <Menu size={20} />
+            </button>
+
+            {/* Spacer */}
+            <div className="flex-grow min-w-0" />
+
+            {/* Right: Actions - Always visible on all screens */}
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+              {/* Sound Toggle */}
+              <button
+                onClick={() => {
+                  setSoundEnabled(!soundEnabled);
+                  toast.success(soundEnabled ? "Notification sounds muted" : "Notification sounds enabled", {
+                    position: "top-center",
+                    autoClose: 2000,
+                  });
+                }}
+                className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-all flex-shrink-0 hover:scale-105 active:scale-95"
+                title={soundEnabled ? "Mute Notification Sounds" : "Unmute Notification Sounds"}
+              >
+                {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              </button>
+
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-all flex-shrink-0 hover:scale-105 active:scale-95"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={colorMode.toggleColorMode}
+                className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-all flex-shrink-0 hover:scale-105 active:scale-95"
+                title={isDark ? "Light Mode" : "Dark Mode"}
+              >
+                {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+
+              {/* Notifications */}
+              {/* <button
+                className="relative p-2 rounded-lg hover:bg-muted dark:hover:bg-slate-700 text-gray-700  transition-all flex-shrink-0 hover:scale-105 active:scale-95"
+                title="Notifications"
+              >
+                <Bell size={18} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              </button> */}
+
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-6 bg-gray-300 dark:bg-slate-600 mx-1"></div>
+
+              {/* Profile Avatar */}
+              <button
+                onClick={handleProfileToggle}
+                className="relative p-1 rounded-lg hover:bg-muted dark:hover:bg-slate-700 transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:scale-105 active:scale-95"
+                title="View Full Profile"
+              >
+                <div className="relative">
+                  <img
+                    src={
+                      data?.data?.profileImage?.startsWith("http")
+                        ? data?.data?.profileImage
+                        : `${IMG_PROFILE_URL}/${data?.data?.profileImage}`
+                    }
+                    alt={data?.data?.first_name || "User"}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-border dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                    onError={(e) => {
+                      // Use a data URI for default avatar instead of external URL
+                      e.target.src =
+                        'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e2e8f0"/%3E%3Cpath d="M16 16a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-10 2.67-10 6v2h20v-2c0-3.33-4.67-6-10-6z" fill="%2394a3b8"/%3E%3C/svg%3E';
+                    }}
+                  />
+                  {data?.data?.is_active && (
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-primary/50 border-2 border-white dark:border-slate-800 rounded-full animate-pulse"></span>
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Overlay for mobile when sidebar is open */}
+        {open && (
+          <div
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 bg-black/50 z-10 lg:hidden"
+          />
+        )}
+
+        {/* Main Content - flex-grow to fill remaining space */}
+        <main
+          className="flex-1 overflow-auto w-full bg-background "
+          style={{
+            paddingTop: '64px',
+            maxWidth: '100%',
+            overflowX: 'hidden',
+            paddingLeft: open ? '0px' : '60px',
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.3s ease'
+          }}
+        >
+          <div className="p-2 min-h-full">{children}</div>
+        </main>
+
+        {/* Profile Dropdown */}
+        {profileOpen && (
+          <>
+            <div
+              onClick={() => setProfileOpen(false)}
+              className="fixed inset-0 z-30"
+            />
+            <div className="fixed top-16 right-3 sm:right-4 md:right-6 z-40 w-80 max-w-[calc(100vw-2rem)] bg-card  rounded-lg shadow-xl border border-border  overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <ProfileCard profile={data?.data} />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CustomerAppbar;

@@ -1,0 +1,284 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Disable transitions during theme change for instant update */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+:root {
+  /* Light Mode - Professional "Royal Violet" Theme */
+  /* Palette: White (Bg), Slate (Text), Vibrant Violet (Primary) */
+  
+  --background: 255 255 255;        /* #FFFFFF - Pure White */
+  --foreground: 15 23 42;           /* #0F172A - Slate 900 (High Contrast Text) */
+  
+  --card: 255 255 255;              /* #FFFFFF */
+  --card-hover: 248 250 252;        /* #F8FAFC - Slate 50 */
+  
+  --primary: 124 58 237;            /* #7C3AED - Violet 600 */
+  --secondary: 241 245 249;         /* #F1F5F9 - Slate 100 */
+  --accent: 243 232 255;            /* #F3E8FF - Violet 100 (Subtle Accent) */
+  --surface: 255 255 255;           /* #FFFFFF */
+  
+  --border: 226 232 240;            /* #E2E8F0 - Slate 200 */
+  --input: 241 245 249;             /* #F1F5F9 */
+  --ring: 124 58 237;               /* #7C3AED - Violet Ring */
+  
+  --muted: 241 245 249;             /* #F1F5F9 */
+  --muted-foreground: 100 116 139;  /* #64748B - Slate 500 */
+  
+  /* Status Colors (Clean & Distinct) */
+  --success: 22 163 74;             /* #16A34A - Green 600 */
+  --warning: 202 138 4;             /* #CA8A04 - Yellow 600 */
+  --error: 220 38 38;               /* #DC2626 - Red 600 */
+  --info: 124 58 237;               /* #7C3AED - Violet 600 */
+  
+  /* Chart Colors */
+  --chart-1: 124 58 237;            /* Violet (Primary) */
+  --chart-2: 59 130 246;            /* Blue */
+  --chart-3: 16 185 129;            /* Emerald */
+  --chart-4: 245 158 11;            /* Amber */
+  --chart-5: 239 68 68;             /* Red */
+  --chart-6: 100 116 139;           /* Slate */
+}
+
+.dark {
+  /* Dark Mode - Warm Midnight + Vibrant Orange Accent */
+  /* Palette: Warm Obsidian (Brown-Black), Orange (Primary), Stone (Neutrals) */
+  
+  --background: 21 14 12;           /* #150E0C - Base Warm Dark */
+  --foreground: 250 250 249;        /* #FAFAF9 - Stone 50 */
+  
+  --card: 32 24 20;                 /* #201814 - Warm Dark Card surface */
+  --card-hover: 43 32 28;           /* #2B201C - Lighter Warm Dark */
+  
+  --primary: 249 115 22;            /* #F97316 - Vibrant Orange */
+  --secondary: 43 32 28;            /* #2B201C - Lighter Warm Dark */
+  --accent: 43 32 28;               /* #2B201C - Lighter Warm Dark */
+  --surface: 32 24 20;              /* #201814 - Match Card */
+  
+  --border: 43 32 28;               /* #2B201C - Warm Border */
+  --input: 32 24 20;                /* #201814 - Darker Input */
+  --ring: 249 115 22;               /* Orange Focus Ring */
+  
+  --muted: 32 24 20;                /* #201814 */
+  --muted-foreground: 168 162 158;  /* #A8A29E - Stone 400 */
+  
+  /* Status Colors (Vibrant/Pastel for Dark Mode visibility) */
+  --success: 74 222 128;            /* #4ADE80 - Green 400 */
+  --warning: 250 204 21;            /* #FACC15 - Yellow 400 */
+  --error: 248 113 113;             /* #F87171 - Red 400 */
+  --info: 96 165 250;               /* #60A5FA - Blue 400 */
+  
+  /* Chart Colors - Professional Data Viz Palette */
+  --chart-1: 249 115 22;            /* #F97316 - Vibrant Orange */
+  --chart-2: 165 148 249;           /* Brand Purple */
+  --chart-3: 16 185 129;            /* Emerald */
+  --chart-4: 59 130 246;            /* Blue */
+  --chart-5: 236 72 153;            /* Pink */
+  --chart-6: 234 179 8;             /* Yellow */
+}
+
+/* Legacy theme support */
+:root[data-theme="light"] {
+  /* Inherits from :root */
+}
+
+:root[data-theme="dark"] {
+  /* Apply dark class styles - Warm Midnight + Orange */
+  
+  --background: 21 14 12;           /* #150E0C */
+  --foreground: 250 250 249;        /* #FAFAF9 */
+  
+  --card: 32 24 20;                 /* #201814 */
+  --card-hover: 43 32 28;           /* #2B201C */
+  
+  --primary: 249 115 22;            /* #F97316 - Orange */
+  --secondary: 43 32 28;            /* #2B201C */
+  --accent: 43 32 28;               /* #2B201C */
+  --surface: 32 24 20;              /* #201814 */
+  
+  --border: 43 32 28;               /* #2B201C */
+  --input: 32 24 20;                /* #201814 */
+  --ring: 249 115 22;               /* Orange */
+  
+  --muted: 32 24 20;                /* #201814 */
+  --muted-foreground: 168 162 158;  /* #A8A29E */
+  
+  /* Status Colors */
+  --success: 74 222 128;
+  --warning: 250 204 21;
+  --error: 248 113 113;
+  --info: 96 165 250;
+  
+  /* Chart Colors */
+  --chart-1: 249 115 22;
+  --chart-2: 165 148 249;
+  --chart-3: 16 185 129;
+  --chart-4: 59 130 246;
+  --chart-5: 236 72 153;
+  --chart-6: 234 179 8;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  /* Allow both vertical and horizontal scrolling globally */
+  overflow-x: auto;
+  overflow-y: auto;
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+}
+
+#root {
+  min-height: 100vh;
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+}
+
+/* Universal Thin Scrollbar */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: #57534e; /* stone-600 - Warm Grey to match Warm Dark theme */
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: #78716c; /* stone-500 - Lighter Warm Grey */
+}
+
+/* Restrict scroll only inside panes of ticketing layout */
+.ticketing-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+
+
+
+
+
+/* Notification animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Themed login panels */
+.login-left-panel {
+  background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--secondary)));
+  color: rgb(var(--foreground));
+}
+
+.login-right-panel {
+  background: rgb(var(--card));
+  color: rgb(var(--foreground));
+}
+
+.theme-toggle-btn {
+  padding: 6px;
+  border-radius: 8px;
+  background: rgb(var(--surface) / 0.5);
+  color: rgb(var(--foreground));
+}
+
+/* Animation Utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.4s ease-out;
+}
+
+/* Smooth Transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke,
+    opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+
+
+/* Enable horizontal scrolling for wide content */
+.overflow-x-scroll {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+/* Ensure tables and wide containers can scroll horizontally */
+table {
+  min-width: 100%;
+}
+
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+}
