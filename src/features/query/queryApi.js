@@ -35,11 +35,21 @@ export const queryApi = createApi({
 
     // Get all queries (for Agent/QA)
     getAllQueries: builder.query({
-      query: ({ status, category, assignedTo, page, limit, sort, transferTarget } = {}) => ({
+      query: ({ status, category, assignedTo, page, limit, sort, transferTarget, brand, severityLevel, regulatoryRiskFlag } = {}) => ({
         url: '/all',
-        params: { status, category, assignedTo, page, limit, sort, transferTarget },
+        params: { status, category, assignedTo, page, limit, sort, transferTarget, brand, severityLevel, regulatoryRiskFlag },
       }),
       providesTags: ['Query'],
+    }),
+
+    // Update FMCG query details (product info, escalation, compliance, etc.)
+    updateQueryDetails: builder.mutation({
+      query: ({ petitionId, ...data }) => ({
+        url: `/${petitionId}/details`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { petitionId }) => [{ type: 'Query', id: petitionId }],
     }),
 
     // Get single query by petition ID
@@ -170,4 +180,5 @@ export const {
   useGetAvailableAgentsQuery,
   useGetRecentEscalationsQuery,
   useDeleteQueryMutation,
+  useUpdateQueryDetailsMutation,
 } = queryApi;

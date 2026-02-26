@@ -81,7 +81,7 @@ const AgentActivity = () => {
     setLoadingHistory((prev) => ({ ...prev, [agentId]: true }));
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/v1/user/activity/30-days/${agentId}`, {
         headers: {

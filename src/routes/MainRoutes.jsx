@@ -74,6 +74,7 @@ const TLAgentPerformanceDetail = lazy(
 const TLAgentActivity = lazy(() => import('../pages/private/tl/reports/AgentActivity'));
 const TLQAPerformanceDetail = lazy(() => import('../pages/private/tl/reports/QAPerformanceDetail'));
 const TLQAActivity = lazy(() => import('../pages/private/tl/reports/QAActivity'));
+const FmcgReports = lazy(() => import('../pages/private/tl/reports/FmcgReports'));
 const AgentProfile = lazy(() => import('../pages/private/agent/Profile'));
 const QAProfile = lazy(() => import('../pages/private/qa/Profile'));
 const TLProfile = lazy(() => import('../pages/private/tl/Profile'));
@@ -251,6 +252,7 @@ const tlChildren = [
   { path: 'leave-apply', element: <LeaveApply /> },
   { path: 'reports/qa-performance', element: <TLQAPerformanceDetail /> },
   { path: 'reports/qa-activity', element: <TLQAActivity /> },
+  { path: 'reports/fmcg', element: <FmcgReports /> },
   {
     path: 'ticketing',
     element: <InboxLayout />,
@@ -353,6 +355,7 @@ const managementChildren = [
   { path: 'reports/qa-activity', element: <QAActivity /> },
   { path: 'reports/tl-performance', element: <TLPerformanceDetail /> },
   { path: 'reports/tl-activity', element: <TLActivity /> },
+  { path: 'reports/fmcg', element: <FmcgReports /> },
 ];
 
 // ✅ Main Router
@@ -547,7 +550,7 @@ const routers = createBrowserRouter(
       element: <RouteErrorBoundary />,
     },
   ],
-  { basename: '/AX-6242600' }
+  { basename: '/FMG' }
 );
 
 export default function MainRoutes() {
