@@ -8,7 +8,7 @@ const NotificationSoundContext = createContext({
   setVolume: () => {},
 });
 
-export function NotificationSoundProvider({ children, src = '/AX-6242600/notification-tone.mp3' }) {
+export function NotificationSoundProvider({ children, src = '/FMG/notification-tone.mp3' }) {
   const audioRef = useRef(null);
   const [enabled, setEnabled] = useState(() => {
     const saved = localStorage.getItem('notifSoundEnabled');
