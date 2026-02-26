@@ -550,7 +550,7 @@ const routers = createBrowserRouter(
       element: <RouteErrorBoundary />,
     },
   ],
-  { basename: '/AX-6242600' }
+  { basename: '/FMG' }
 );
 
 export default function MainRoutes() {

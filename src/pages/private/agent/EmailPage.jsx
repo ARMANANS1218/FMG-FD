@@ -45,7 +45,7 @@ export default function EmailPage() {
 
           {/* Go Home Button */}
           <button
-            onClick={() => navigate('/AX-6242600')}
+            onClick={() => navigate('/FMG')}
             className="inline-flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
           >
             <svg 

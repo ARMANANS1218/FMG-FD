@@ -3,11 +3,11 @@
   "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     {
-      "source": "/AX-6242600/(.*)",
+      "source": "/FMG/(.*)",
       "destination": "/$1"
     },
     {
-      "source": "/AX-6242600",
+      "source": "/FMG",
       "destination": "/index.html"
     },
     {

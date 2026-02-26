@@ -1,14 +1,14 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Dynamically set base path: production builds served under /AX-6242600/, local dev at root
+// Dynamically set base path: production builds served under /FMG/, local dev at root
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const isProd = mode === 'production';
   return {
     plugins: [react()],
 
-    base: '/AX-6242600/',
+    base: '/FMG/',
     server: {
       port: 5173,
     },
