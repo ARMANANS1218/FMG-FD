@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useGetAllQueriesQuery, useAcceptQueryMutation } from '../../../features/query/queryApi';
 import { useDeleteQueryMutation } from '../../../features/query/queryApi';
+import FmcgQueryPanel from '../../../components/fmcg/FmcgQueryPanel';
 import ConfirmDialog from '../../../components/ConfirmDialog';
 import useNotificationSound from '../../../hooks/useNotificationSound';
 import { getQuerySocket } from '../../../socket/querySocket';
@@ -100,6 +101,7 @@ export default function QueryManagement() {
   const [confirmMode, setConfirmMode] = useState(null); // 'transfer' | 'delete' | null
   const [transferInfo, setTransferInfo] = useState(null); // holds payload from socket
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [expandedFmcgId, setExpandedFmcgId] = useState(null); // FMCG panel toggle
 
   const currentUser = profileData?.data;
   // Handle the API response structure - backend returns { data: { all: [], pending: [], ... } }
@@ -151,75 +153,75 @@ export default function QueryManagement() {
   // Filter queries - with safety checks
   const filteredQueries = Array.isArray(allQueries)
     ? allQueries.filter((query) => {
-        // Filter by active tab
-        let matchesTab = true;
-        if (activeTab === 'Pending') {
-          // Changed: Ensure Pending tab ONLY shows queries with status 'Pending'
-          matchesTab = query.status === 'Pending';
-        } else if (activeTab === 'InProgress') {
-          matchesTab = query.status === 'In Progress';
-        } else if (activeTab === 'my') {
-          // Show queries resolved by OR assigned to (Accepted/InProgress) the current agent
-          const resolvedById =
-            typeof query.resolvedBy === 'object' ? query.resolvedBy?._id : query.resolvedBy;
-          const assignedToId =
-            typeof query.assignedTo === 'object' ? query.assignedTo?._id : query.assignedTo;
+      // Filter by active tab
+      let matchesTab = true;
+      if (activeTab === 'Pending') {
+        // Changed: Ensure Pending tab ONLY shows queries with status 'Pending'
+        matchesTab = query.status === 'Pending';
+      } else if (activeTab === 'InProgress') {
+        matchesTab = query.status === 'In Progress';
+      } else if (activeTab === 'my') {
+        // Show queries resolved by OR assigned to (Accepted/InProgress) the current agent
+        const resolvedById =
+          typeof query.resolvedBy === 'object' ? query.resolvedBy?._id : query.resolvedBy;
+        const assignedToId =
+          typeof query.assignedTo === 'object' ? query.assignedTo?._id : query.assignedTo;
 
-          const isResolvedByMe = query.status === 'Resolved' && resolvedById === currentUser?._id;
-          const isAssignedToMe =
-            (query.status === 'Accepted' || query.status === 'In Progress') &&
-            assignedToId === currentUser?._id;
+        const isResolvedByMe = query.status === 'Resolved' && resolvedById === currentUser?._id;
+        const isAssignedToMe =
+          (query.status === 'Accepted' || query.status === 'In Progress') &&
+          assignedToId === currentUser?._id;
 
-          matchesTab = isResolvedByMe || isAssignedToMe;
+        matchesTab = isResolvedByMe || isAssignedToMe;
 
-          // Debug logging
-          if (matchesTab) {
-            console.log('My Queries Filter Match:', {
-              petitionId: query.petitionId,
-              status: query.status,
-              isResolvedByMe,
-              isAssignedToMe,
-            });
-          }
-        } else if (activeTab === 'Resolved') {
-          matchesTab = query.status === 'Resolved';
-        } else if (activeTab === 'Escalated') {
-          // Show BOTH:
-          // 1) Queries escalated BY current user (outgoing)
-          // 2) Queries escalated TO current user (incoming)
-          if (query.transferHistory && query.transferHistory.length > 0) {
-            const latestTransfer = query.transferHistory[query.transferHistory.length - 1];
-            const fromAgentId =
-              typeof latestTransfer?.fromAgent === 'object'
-                ? latestTransfer?.fromAgent?._id
-                : latestTransfer?.fromAgent;
-            const toAgentId =
-              typeof latestTransfer?.toAgent === 'object'
-                ? latestTransfer?.toAgent?._id
-                : latestTransfer?.toAgent;
-            
-            // Match if current user is either the sender OR receiver of escalation
-            const escalatedByMe = fromAgentId === currentUser?._id;
-            const escalatedToMe = toAgentId === currentUser?._id;
-            matchesTab = escalatedByMe || escalatedToMe;
-          } else {
-            matchesTab = false;
-          }
+        // Debug logging
+        if (matchesTab) {
+          console.log('My Queries Filter Match:', {
+            petitionId: query.petitionId,
+            status: query.status,
+            isResolvedByMe,
+            isAssignedToMe,
+          });
         }
-        // activeTab === 'all' shows everything
+      } else if (activeTab === 'Resolved') {
+        matchesTab = query.status === 'Resolved';
+      } else if (activeTab === 'Escalated') {
+        // Show BOTH:
+        // 1) Queries escalated BY current user (outgoing)
+        // 2) Queries escalated TO current user (incoming)
+        if (query.transferHistory && query.transferHistory.length > 0) {
+          const latestTransfer = query.transferHistory[query.transferHistory.length - 1];
+          const fromAgentId =
+            typeof latestTransfer?.fromAgent === 'object'
+              ? latestTransfer?.fromAgent?._id
+              : latestTransfer?.fromAgent;
+          const toAgentId =
+            typeof latestTransfer?.toAgent === 'object'
+              ? latestTransfer?.toAgent?._id
+              : latestTransfer?.toAgent;
 
-        const matchesSearch =
-          query.petitionId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          query.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          query.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          getDisplayName(query.customerName, query.customerEmail)
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase());
+          // Match if current user is either the sender OR receiver of escalation
+          const escalatedByMe = fromAgentId === currentUser?._id;
+          const escalatedToMe = toAgentId === currentUser?._id;
+          matchesTab = escalatedByMe || escalatedToMe;
+        } else {
+          matchesTab = false;
+        }
+      }
+      // activeTab === 'all' shows everything
 
-        const matchesPriority = filterPriority === 'all' || query.priority === filterPriority;
+      const matchesSearch =
+        query.petitionId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        query.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        query.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getDisplayName(query.customerName, query.customerEmail)
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
-        return matchesTab && matchesSearch && matchesPriority;
-      })
+      const matchesPriority = filterPriority === 'all' || query.priority === filterPriority;
+
+      return matchesTab && matchesSearch && matchesPriority;
+    })
     : [];
 
   // Stats calculation - prefer backend counts when available
@@ -229,38 +231,38 @@ export default function QueryManagement() {
       typeof backendCounts?.pending === 'number'
         ? backendCounts.pending
         : Array.isArray(allQueries)
-        ? allQueries.filter((q) => q.status === 'Pending').length
-        : 0,
+          ? allQueries.filter((q) => q.status === 'Pending').length
+          : 0,
     inProgress:
       typeof backendCounts?.inProgress === 'number'
         ? backendCounts.inProgress
         : Array.isArray(allQueries)
-        ? allQueries.filter((q) => q.status === 'In Progress').length
-        : 0,
+          ? allQueries.filter((q) => q.status === 'In Progress').length
+          : 0,
     myQueries: Array.isArray(allQueries)
       ? allQueries.filter((q) => {
-          const resolvedById = typeof q.resolvedBy === 'object' ? q.resolvedBy?._id : q.resolvedBy;
-          const assignedToId = typeof q.assignedTo === 'object' ? q.assignedTo?._id : q.assignedTo;
+        const resolvedById = typeof q.resolvedBy === 'object' ? q.resolvedBy?._id : q.resolvedBy;
+        const assignedToId = typeof q.assignedTo === 'object' ? q.assignedTo?._id : q.assignedTo;
 
-          const isResolvedByMe = q.status === 'Resolved' && resolvedById === currentUser?._id;
-          const isAssignedToMe =
-            (q.status === 'Accepted' || q.status === 'In Progress') &&
-            assignedToId === currentUser?._id;
+        const isResolvedByMe = q.status === 'Resolved' && resolvedById === currentUser?._id;
+        const isAssignedToMe =
+          (q.status === 'Accepted' || q.status === 'In Progress') &&
+          assignedToId === currentUser?._id;
 
-          return isResolvedByMe || isAssignedToMe;
-        }).length
+        return isResolvedByMe || isAssignedToMe;
+      }).length
       : 0,
     resolved:
       typeof backendCounts?.resolved === 'number'
         ? backendCounts.resolved
         : Array.isArray(allQueries)
-        ? allQueries.filter((q) => q.status === 'Resolved').length
-        : 0,
+          ? allQueries.filter((q) => q.status === 'Resolved').length
+          : 0,
     escalated:
       typeof backendCounts?.escalated === 'number'
         ? backendCounts.escalated
         : Array.isArray(allQueries)
-        ? allQueries.filter((q) => {
+          ? allQueries.filter((q) => {
             if (q.transferHistory && q.transferHistory.length > 0) {
               const latestTransfer = q.transferHistory[q.transferHistory.length - 1];
               const fromAgentId =
@@ -271,19 +273,19 @@ export default function QueryManagement() {
                 typeof latestTransfer?.toAgent === 'object'
                   ? latestTransfer?.toAgent?._id
                   : latestTransfer?.toAgent;
-              
+
               // Count if current user is either the sender OR receiver
               return fromAgentId === currentUser?._id || toAgentId === currentUser?._id;
             }
             return false;
           }).length
-        : 0,
+          : 0,
     total:
       typeof backendCounts?.total === 'number'
         ? backendCounts.total
         : Array.isArray(allQueries)
-        ? allQueries.length
-        : 0,
+          ? allQueries.length
+          : 0,
   };
 
   // Debug logging for stats
@@ -385,9 +387,9 @@ export default function QueryManagement() {
   ];
 
   const categories = [
-    'all', 
-    'Booking', 'Cancellation', 'Reschedule', 'Refund', 
-    'Baggage', 'Check-in', 'Meal / Seat', 'Visa / Travel Advisory', 
+    'all',
+    'Booking', 'Cancellation', 'Reschedule', 'Refund',
+    'Baggage', 'Check-in', 'Meal / Seat', 'Visa / Travel Advisory',
     'Other'
   ];
   const priorities = ['all', 'Low', 'Medium', 'High', 'Urgent'];
@@ -462,19 +464,17 @@ export default function QueryManagement() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all text-sm flex items-center gap-2 border ${
-                      activeTab === tab.id
+                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all text-sm flex items-center gap-2 border ${activeTab === tab.id
                         ? 'bg-primary text-primary-foreground border-primary'
                         : 'bg-card text-muted-foreground hover:bg-muted border-border hover:border-muted-foreground/20'
-                    }`}
+                      }`}
                   >
                     {tab.label}
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        activeTab === tab.id
+                      className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === tab.id
                           ? 'bg-white/20 text-white'
                           : 'bg-muted text-muted-foreground'
-                      }`}
+                        }`}
                     >
                       {tab.count}
                     </span>
@@ -489,7 +489,7 @@ export default function QueryManagement() {
             {filteredQueries.length === 0 ? (
               <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
                 <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle size={32} className="text-muted-foreground" />
+                  <AlertCircle size={32} className="text-muted-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
                   No queries found
@@ -575,7 +575,7 @@ export default function QueryManagement() {
                                   </span>
                                   <span className="opacity-50">•</span>
                                   <span className="flex items-center gap-1">
-                                     {formatDistanceToNow(new Date(query.createdAt || query.created_at), { addSuffix: true })}
+                                    {formatDistanceToNow(new Date(query.createdAt || query.created_at), { addSuffix: true })}
                                   </span>
                                 </div>
                               </div>
@@ -600,15 +600,14 @@ export default function QueryManagement() {
                               {/* Evaluation Badge */}
                               {query?.evaluation && (
                                 <span
-                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                                    query.evaluation.totalWeightedScore >= 80
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${query.evaluation.totalWeightedScore >= 80
                                       ? 'bg-green-500/10 text-green-500 border-green-500/20'
                                       : query.evaluation.totalWeightedScore >= 60
-                                      ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                                      : query.evaluation.totalWeightedScore >= 40
-                                      ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                                      : 'bg-red-500/10 text-red-500 border-red-500/20'
-                                  }`}
+                                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                        : query.evaluation.totalWeightedScore >= 40
+                                          ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                          : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                    }`}
                                 >
                                   <span>{query.evaluation.performanceCategory}</span>
                                   <span className="font-bold">
@@ -660,9 +659,9 @@ export default function QueryManagement() {
                               </span>
                             )}
 
-                             {/* Action Buttons inside Card */}
+                            {/* Action Buttons inside Card */}
                             <div className="ml-auto flex items-center gap-2">
-                               {canAccept && (
+                              {canAccept && (
                                 <button
                                   onClick={(e) => handleAcceptQuery(query.petitionId, e)}
                                   disabled={isAccepting}
@@ -671,8 +670,8 @@ export default function QueryManagement() {
                                   Accept
                                 </button>
                               )}
-                              
-                               {hasPendingTransfer && (
+
+                              {hasPendingTransfer && (
                                 <button
                                   onClick={(e) => handleAcceptQuery(query.petitionId, e)}
                                   disabled={isAccepting}
@@ -681,13 +680,36 @@ export default function QueryManagement() {
                                   Accept Transfer
                                 </button>
                               )}
-                              
-                               <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
-                                  View <ArrowRight size={12} />
-                               </span>
+
+                              <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
+                                View <ArrowRight size={12} />
+                              </span>
                             </div>
                           </div>
-                          
+
+                          {/* FMCG Panel Toggle Button */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedFmcgId(expandedFmcgId === query.petitionId ? null : query.petitionId);
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-all ${expandedFmcgId === query.petitionId
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                                }`}
+                            >
+                              🇬🇧 {expandedFmcgId === query.petitionId ? 'Hide FMCG Details' : 'FMCG Details'}
+                            </button>
+                          </div>
+
+                          {/* Inline FMCG Panel */}
+                          {expandedFmcgId === query.petitionId && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <FmcgQueryPanel query={query} />
+                            </div>
+                          )}
+
                         </div>
                       </div>
                     );
@@ -885,14 +907,12 @@ export default function QueryManagement() {
         title={confirmMode === 'transfer' ? 'Transfer request' : 'Delete query?'}
         message={
           confirmMode === 'transfer'
-            ? `You have a transfer request for petition ${pendingPetitionId}${
-                transferInfo?.from?.name ? ` from ${transferInfo.from.name}` : ''
-              }${
-                transferInfo?.reason
-                  ? `.
+            ? `You have a transfer request for petition ${pendingPetitionId}${transferInfo?.from?.name ? ` from ${transferInfo.from.name}` : ''
+            }${transferInfo?.reason
+              ? `.
 Reason: ${transferInfo.reason}`
-                  : '.'
-              } Accept to take ownership or ignore to decline.`
+              : '.'
+            } Accept to take ownership or ignore to decline.`
             : 'Delete this query permanently? This action cannot be undone.'
         }
         confirmText={confirmMode === 'transfer' ? 'Accept' : 'Delete'}
@@ -901,23 +921,23 @@ Reason: ${transferInfo.reason}`
         onConfirm={
           confirmMode === 'transfer'
             ? async () => {
-                // Accept transfer
-                try {
-                  await acceptQuery(pendingPetitionId).unwrap();
-                  toast.success('Transfer accepted');
-                  play();
-                  setConfirmOpen(false);
-                  const userRole = currentUser?.role?.toLowerCase();
-                  const navId = pendingPetitionId;
-                  setPendingPetitionId(null);
-                  setTransferInfo(null);
-                  setConfirmMode(null);
-                  refetch();
-                  setTimeout(() => navigate(`/${userRole}/query/${navId}`), 300);
-                } catch (err) {
-                  toast.error(err?.data?.message || 'Failed to accept transfer');
-                }
+              // Accept transfer
+              try {
+                await acceptQuery(pendingPetitionId).unwrap();
+                toast.success('Transfer accepted');
+                play();
+                setConfirmOpen(false);
+                const userRole = currentUser?.role?.toLowerCase();
+                const navId = pendingPetitionId;
+                setPendingPetitionId(null);
+                setTransferInfo(null);
+                setConfirmMode(null);
+                refetch();
+                setTimeout(() => navigate(`/${userRole}/query/${navId}`), 300);
+              } catch (err) {
+                toast.error(err?.data?.message || 'Failed to accept transfer');
               }
+            }
             : confirmDelete
         }
         onCancel={() => {

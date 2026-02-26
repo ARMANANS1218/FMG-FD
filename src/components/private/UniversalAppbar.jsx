@@ -526,7 +526,7 @@ const UniversalAppbar = ({ children }) => {
                     </Stack>
                   </Tooltip>
 
-                  {/* Status Toggle Switch */}
+                  {/* Status Toggle Switch */}  
                   <Tooltip
                     title={
                       agent?.workStatus === 'active'
