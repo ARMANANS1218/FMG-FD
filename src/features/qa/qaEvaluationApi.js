@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 export const qaEvaluationApi = createApi({
   reducerPath: 'qaEvaluationApi',
@@ -12,7 +12,7 @@ export const qaEvaluationApi = createApi({
       return headers;
     }
   }),
-  tagTypes: ['Evaluation','Evaluations','Aggregates'],
+  tagTypes: ['Evaluation', 'Evaluations', 'Aggregates'],
   endpoints: (builder) => ({
     rateQuery: builder.mutation({
       query: (body) => ({
@@ -20,11 +20,11 @@ export const qaEvaluationApi = createApi({
         method: 'POST',
         body
       }),
-      invalidatesTags: (result, error, arg) => [ { type: 'Evaluation', id: arg.petitionId }, 'Aggregates' ]
+      invalidatesTags: (result, error, arg) => [{ type: 'Evaluation', id: arg.petitionId }, 'Aggregates']
     }),
     getEvaluation: builder.query({
       query: (petitionId) => `qa/by-petition/${petitionId}`,
-      providesTags: (result, error, petitionId) => [ { type: 'Evaluation', id: petitionId } ]
+      providesTags: (result, error, petitionId) => [{ type: 'Evaluation', id: petitionId }]
     }),
     listEvaluations: builder.query({
       query: (params = {}) => ({

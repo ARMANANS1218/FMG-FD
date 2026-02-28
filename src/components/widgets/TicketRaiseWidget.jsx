@@ -3,7 +3,7 @@ import { X, Send, Mail, User, MessageSquare } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 /**
  * TicketRaiseWidget: Embedded widget component for customers to raise tickets
@@ -19,7 +19,7 @@ export default function TicketRaiseWidget({ apiKey, user, onTicketCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('Please login to raise a ticket');
       return;
@@ -32,7 +32,7 @@ export default function TicketRaiseWidget({ apiKey, user, onTicketCreated }) {
 
     try {
       setSubmitting(true);
-      
+
       const payload = {
         channel: 'widget',
         title: subject, // Note: Backend expects 'subject', this might need adjustment if backend doesn't map title->subject
@@ -67,7 +67,7 @@ export default function TicketRaiseWidget({ apiKey, user, onTicketCreated }) {
       );
 
       toast.success(`Ticket created: ${res.data.data ? res.data.data.ticketId : 'Success'}`);
-      
+
       // Reset form
       setSubject('');
       setMessage('');

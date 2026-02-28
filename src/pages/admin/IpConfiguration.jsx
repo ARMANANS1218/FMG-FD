@@ -3,7 +3,7 @@ import { Search, Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Shield, AlertCirc
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 const IpConfiguration = () => {
   const [users, setUsers] = useState([]);
@@ -13,7 +13,7 @@ const IpConfiguration = () => {
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  
+
   // Modal state
   const [ipAddresses, setIpAddresses] = useState([{ ip: '', description: '' }]);
   const [isActive, setIsActive] = useState(true);
@@ -29,10 +29,10 @@ const IpConfiguration = () => {
       const response = await axios.get(`${API_BASE}/api/v1/user/employees`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       // Filter only agents, QA, and team leaders
       const allUsers = response.data.data || [];
-      const filteredUsers = allUsers.filter(user => 
+      const filteredUsers = allUsers.filter(user =>
         ['agent', 'qa', 'tl'].includes(user.role?.toLowerCase())
       );
       setUsers(filteredUsers);
@@ -47,12 +47,12 @@ const IpConfiguration = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       const params = filterRole !== 'all' ? { role: filterRole } : {};
-      
+
       const response = await axios.get(`${API_BASE}/api/v1/ip-configuration`, {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
-      
+
       setIpConfigs(response.data.data || []);
     } catch (error) {
       console.error('Error fetching IP configurations:', error);
@@ -77,7 +77,7 @@ const IpConfiguration = () => {
       setIpAddresses([{ ip: '', description: '' }]);
       setIsActive(true);
     }
-    
+
     setShowModal(true);
   };
 
@@ -129,40 +129,40 @@ const IpConfiguration = () => {
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
     const cleanedIps = [];
     const seenIps = new Set(); // Track unique IPs
-    
+
     for (const item of validIps) {
       // Remove subnet mask if present (e.g., 122.185.245.96/29 -> 122.185.245.96)
       const cleanIp = item.ip.split('/')[0].trim();
-      
+
       // Skip duplicate IPs
       if (seenIps.has(cleanIp)) {
         continue;
       }
       seenIps.add(cleanIp);
-      
+
       if (!ipRegex.test(cleanIp)) {
         toast.error(`Invalid IP address format: ${item.ip}`);
         return;
       }
-      
+
       // Validate IP range (0-255)
       const parts = cleanIp.split('.');
       const invalidPart = parts.find(part => {
         const num = parseInt(part, 10);
         return isNaN(num) || num < 0 || num > 255;
       });
-      
+
       if (invalidPart !== undefined) {
         toast.error(`Invalid IP address: ${cleanIp}`);
         return;
       }
-      
+
       cleanedIps.push({
         ip: cleanIp,
         description: item.description || 'Office IP'
       });
     }
-    
+
     if (cleanedIps.length === 0) {
       toast.error('No valid IP addresses found after removing duplicates');
       return;
@@ -235,7 +235,7 @@ const IpConfiguration = () => {
 
   const filteredConfigs = ipConfigs.filter(config => {
     const matchesSearch = config.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         config.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      config.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -287,7 +287,7 @@ const IpConfiguration = () => {
                 className="w-full pl-10 pr-4 py-2 border border-border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 "
               />
             </div>
-            
+
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
@@ -514,14 +514,12 @@ const IpConfiguration = () => {
                 </div>
                 <button
                   onClick={() => setIsActive(!isActive)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    isActive ? 'bg-primary' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${isActive ? 'bg-primary' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-card transition ${
-                      isActive ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-card transition ${isActive ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>

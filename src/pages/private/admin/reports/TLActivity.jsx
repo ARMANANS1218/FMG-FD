@@ -3,6 +3,7 @@ import { CircularProgress, Avatar } from '@mui/material';
 import { AccessTime, Login, Logout, Coffee, Work } from '@mui/icons-material';
 import { RefreshCw, FileSpreadsheet, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useGetAllEmployeesQuery } from '../../../../features/admin/adminApi';
+import BreakDetailsModal from '../../../../components/common/BreakDetailsModal';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
@@ -40,6 +41,10 @@ const TLActivity = () => {
   const [expandedTLId, setExpandedTLId] = useState(null);
   const [tlHistory, setTLHistory] = useState({});
   const [loadingHistory, setLoadingHistory] = useState({});
+
+  // Break Details Modal state
+  const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
+  const [selectedBreakTL, setSelectedBreakTL] = useState(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -120,12 +125,12 @@ const TLActivity = () => {
     } else if (tl.is_active) {
       logoutTime = null;
       const totalTimeInMs = now - loginTime;
-      const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
+      const totalTimeInMinutes = totalTimeInMs / 60000;
       activeTime = Math.max(0, totalTimeInMinutes - totalBreakDuration);
     } else if (logoutTimeRaw) {
       logoutTime = logoutTimeRaw;
       const totalTimeInMs = logoutTimeRaw - loginTime;
-      const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
+      const totalTimeInMinutes = totalTimeInMs / 60000;
       activeTime = Math.max(0, totalTimeInMinutes - totalBreakDuration);
     } else {
       logoutTime = null;
@@ -151,11 +156,12 @@ const TLActivity = () => {
   };
 
   const formatDuration = (minutes) => {
-    if (!minutes || minutes <= 0) return '0m';
-    const roundedMinutes = Math.round(minutes);
-    const hours = Math.floor(roundedMinutes / 60);
-    const mins = roundedMinutes % 60;
-    return hours > 0 ? `${hours}h ${mins.toString().padStart(2, '0')}m` : `${mins}m`;
+    if (!minutes || minutes < 0) return '00:00:00';
+    const totalSeconds = Math.round(minutes * 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
   };
 
   // Download individual TL Excel
@@ -547,7 +553,7 @@ const TLActivity = () => {
               <h3 className="text-3xl font-bold text-foreground  mt-1">
                 {formatDuration(
                   tlWithActivity.reduce((acc, t) => acc + t.activity.activeTime, 0) /
-                    tlMembers.length || 0
+                  tlMembers.length || 0
                 )}
               </h3>
             </div>
@@ -587,6 +593,9 @@ const TLActivity = () => {
                   Breaks
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Break Reason
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Break Duration
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
@@ -615,15 +624,14 @@ const TLActivity = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          tl.activity.logoutTime
-                            ? 'bg-muted text-gray-800  '
-                            : tl.is_active
-                              ? tl.workStatus === 'break'
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
-                              : 'bg-muted text-gray-800  '
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${tl.activity.logoutTime
+                          ? 'bg-muted text-gray-800  '
+                          : tl.is_active
+                            ? tl.workStatus === 'break'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
+                            : 'bg-muted text-gray-800  '
+                          }`}
                       >
                         {tl.activity.logoutTime
                           ? 'Offline'
@@ -652,8 +660,28 @@ const TLActivity = () => {
                     <td className="px-6 py-4 text-sm text-foreground text-center">
                       {tl.activity.totalBreaks}
                     </td>
+                    <td className="px-6 py-4 text-sm text-foreground">
+                      <span className="text-sm font-medium text-amber-600 dark:text-amber-400 italic">
+                        {tl.workStatus === 'break' ? (tl.breakReason || 'Break') : '-'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-sm text-amber-600 dark:text-amber-400 font-medium">
-                      {formatDuration(tl.activity.breakDuration)}
+                      <div className="flex items-center gap-2">
+                        {formatDuration(tl.activity.breakDuration)}
+                        {tl.activity.totalBreaks > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBreakTL(tl);
+                              setIsBreakModalOpen(true);
+                            }}
+                            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full transition-colors"
+                            title="View Break Details"
+                          >
+                            <Coffee fontSize="small" className="text-amber-600 dark:text-amber-400" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -787,6 +815,16 @@ const TLActivity = () => {
           </table>
         </div>
       </div>
+
+      {/* Break Details Modal */}
+      <BreakDetailsModal
+        isOpen={isBreakModalOpen}
+        onClose={() => {
+          setIsBreakModalOpen(false);
+          setSelectedBreakTL(null);
+        }}
+        employeeData={selectedBreakTL}
+      />
     </div>
   );
 };

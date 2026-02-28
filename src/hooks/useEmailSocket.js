@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import io from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 let emailSocket = null;
 
@@ -33,7 +33,7 @@ export const useEmailSocket = (userId) => {
       console.log('📧 New email received:', data);
       setEmails(prev => [data, ...prev]);
       setNewEmailNotification(data);
-      
+
       // Clear notification after 5 seconds
       setTimeout(() => setNewEmailNotification(null), 5000);
     });

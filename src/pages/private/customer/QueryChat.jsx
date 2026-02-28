@@ -67,7 +67,7 @@ import EscalationTimeline from "../../../components/Escalations/EscalationTimeli
 import ColorModeContext from "../../../context/ColorModeContext";
 import CustomerDetailsPanel from "../../../components/customer/CustomerDetailsPanel";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
 const IMG_BASE_URL = `${API_URL}/uploads/profile`;
 
 // Utility function to get proper display name from customer information
@@ -226,10 +226,10 @@ const QueryChat = () => {
   const alreadyRated = !!evalData?.data;
   const evaluationSummary = evalData?.data
     ? {
-        score: evalData.data.totalWeightedScore,
-        result: evalData.data.result,
-        category: evalData.data.performanceCategory || evalData.data.result, // Fallback to result if category not available
-      }
+      score: evalData.data.totalWeightedScore,
+      result: evalData.data.result,
+      category: evalData.data.performanceCategory || evalData.data.result, // Fallback to result if category not available
+    }
     : null;
 
   // Check if user is authorized to send messages
@@ -317,7 +317,7 @@ const QueryChat = () => {
   useEffect(() => {
     if (!currentUser?._id || !petitionId) return;
 
-    const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
     socketRef.current = io(`${SOCKET_URL}/query`, {
       auth: { token: localStorage.getItem("token") },
     });
@@ -355,9 +355,9 @@ const QueryChat = () => {
             // Replace optimistic message with real one from server
             return prev.map((msg) =>
               msg.isOptimistic &&
-              msg.message === data.message.message &&
-              (String(msg.sender) === String(data.message.sender) ||
-                String(msg.sender) === String(data.message.sender?._id))
+                msg.message === data.message.message &&
+                (String(msg.sender) === String(data.message.sender) ||
+                  String(msg.sender) === String(data.message.sender?._id))
                 ? data.message
                 : msg
             );
@@ -488,10 +488,9 @@ const QueryChat = () => {
             }
           });
           console.log(
-            `🔀 Merged: ${deduplicatedServerMessages.length} server + ${
-              optimisticMessages.filter(
-                (m) => !deduplicatedServerMessages.find((s) => s._id === m._id)
-              ).length
+            `🔀 Merged: ${deduplicatedServerMessages.length} server + ${optimisticMessages.filter(
+              (m) => !deduplicatedServerMessages.find((s) => s._id === m._id)
+            ).length
             } optimistic = ${allMessages.length} total`
           );
           return allMessages;
@@ -1016,10 +1015,10 @@ const QueryChat = () => {
               },
               snapshotRequest?.requester
                 ? {
-                    userId: snapshotRequest.requester.id,
-                    name: snapshotRequest.requester.name,
-                    role: snapshotRequest.requester.role,
-                  }
+                  userId: snapshotRequest.requester.id,
+                  name: snapshotRequest.requester.name,
+                  role: snapshotRequest.requester.role,
+                }
                 : {},
             ].filter(Boolean);
             formData.append("participants", JSON.stringify(participants));
@@ -1188,9 +1187,8 @@ const QueryChat = () => {
       });
       const parts = fmt.formatToParts(d);
       const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-      abs = `${map.day} ${map.month}, ${map.hour}:${map.minute} ${
-        map.dayPeriod?.toLowerCase?.() || ""
-      }`.trim();
+      abs = `${map.day} ${map.month}, ${map.hour}:${map.minute} ${map.dayPeriod?.toLowerCase?.() || ""
+        }`.trim();
     } catch {
       abs = format(d, "dd MMM, hh:mm a");
     }
@@ -1479,11 +1477,9 @@ const QueryChat = () => {
     <div className="flex h-[calc(100vh-64px)] bg-card  overflow-hidden">
       {/* Main Chat Container - Shrinks when customer panel or weightage panel is open */}
       <div
-        className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${
-          showCustomerPanel ? "mr-0" : ""
-        } ${
-          showRateModal && isQATeam ? "mr-[600px]" : ""
-        } overflow-x-hidden overflow-y-auto relative`}
+        className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${showCustomerPanel ? "mr-0" : ""
+          } ${showRateModal && isQATeam ? "mr-[600px]" : ""
+          } overflow-x-hidden overflow-y-auto relative`}
         style={{
           maxWidth: showRateModal && isQATeam ? 'calc(100% - 600px)' : '100%'
         }}
@@ -1526,18 +1522,17 @@ const QueryChat = () => {
                         {isCustomer
                           ? query.assignedToName?.[0] || "A"
                           : getDisplayName(
-                              query.customerName,
-                              query.customerEmail
-                            )?.[0] || "C"}
+                            query.customerName,
+                            query.customerEmail
+                          )?.[0] || "C"}
                       </div>
                     )}
                     <div
-                      className={`absolute bottom-0 right-0 w-3.5 h-3.5 ${
-                        query.status === "In Progress" ||
-                        query.status === "Accepted"
+                      className={`absolute bottom-0 right-0 w-3.5 h-3.5 ${query.status === "In Progress" ||
+                          query.status === "Accepted"
                           ? "bg-primary/50"
                           : "bg-gray-400"
-                      } border-2 border-white dark:border-gray-800 rounded-full`}
+                        } border-2 border-white dark:border-gray-800 rounded-full`}
                     ></div>
                   </div>
 
@@ -1548,9 +1543,9 @@ const QueryChat = () => {
                         {isCustomer
                           ? query.assignedToName || "Waiting for Agent"
                           : getDisplayName(
-                              query.customerName,
-                              query.customerEmail
-                            )}
+                            query.customerName,
+                            query.customerEmail
+                          )}
                       </h2>
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white ${getStatusColor(
@@ -1561,19 +1556,18 @@ const QueryChat = () => {
                       </span>
                       {evaluationSummary && (
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white ml-1 ${
-                            evaluationSummary.category === "Excellent"
+                          className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white ml-1 ${evaluationSummary.category === "Excellent"
                               ? "bg-green-600"
                               : evaluationSummary.category === "Good"
-                              ? "bg-primary"
-                              : evaluationSummary.category === "Average"
-                              ? "bg-yellow-600"
-                              : evaluationSummary.category === "Poor"
-                              ? "bg-orange-600"
-                              : evaluationSummary.category === "Very Poor"
-                              ? "bg-red-600"
-                              : "bg-gray-600"
-                          }`}
+                                ? "bg-primary"
+                                : evaluationSummary.category === "Average"
+                                  ? "bg-yellow-600"
+                                  : evaluationSummary.category === "Poor"
+                                    ? "bg-orange-600"
+                                    : evaluationSummary.category === "Very Poor"
+                                      ? "bg-red-600"
+                                      : "bg-gray-600"
+                            }`}
                           title={`Performance: ${evaluationSummary.category} - ${evaluationSummary.score}%`}
                         >
                           {evaluationSummary.category} {evaluationSummary.score}
@@ -1584,11 +1578,10 @@ const QueryChat = () => {
                       {query?.feedback && (
                         <span
                           className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white ml-1 flex items-center gap-1"
-                          title={`Customer Rating: ${query.feedback.rating}/5${
-                            query.feedback.comment
+                          title={`Customer Rating: ${query.feedback.rating}/5${query.feedback.comment
                               ? ` - ${query.feedback.comment}`
                               : ""
-                          }`}
+                            }`}
                         >
                           <span>⭐</span> {query.feedback.rating}/5
                         </span>
@@ -1931,12 +1924,12 @@ const QueryChat = () => {
                         evaluationSummary.category === "Excellent"
                           ? "text-green-600 "
                           : evaluationSummary.category === "Good"
-                          ? "text-foreground "
-                          : evaluationSummary.category === "Average"
-                          ? "text-yellow-600 dark:text-yellow-400"
-                          : evaluationSummary.category === "Poor"
-                          ? "text-orange-600 dark:text-orange-400"
-                          : "text-red-600 dark:text-red-400"
+                            ? "text-foreground "
+                            : evaluationSummary.category === "Average"
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : evaluationSummary.category === "Poor"
+                                ? "text-orange-600 dark:text-orange-400"
+                                : "text-red-600 dark:text-red-400"
                       }
                     >
                       {evaluationSummary.score}% ({evaluationSummary.category})
@@ -1967,11 +1960,10 @@ const QueryChat = () => {
               {isAgent && showEscDropdown && (
                 <div className="mt-3 w-full">
                   <div
-                    className={`w-full rounded-xl ${
-                      isDark
+                    className={`w-full rounded-xl ${isDark
                         ? "bg-slate-800 border border-slate-700"
                         : "bg-card border border-border"
-                    } shadow-inner`}
+                      } shadow-inner`}
                   >
                     <div className="p-2">
                       <EscalationTimeline
@@ -2058,10 +2050,10 @@ const QueryChat = () => {
                             ) {
                               const latest =
                                 Array.isArray(query?.transferHistory) &&
-                                query.transferHistory.length
+                                  query.transferHistory.length
                                   ? query.transferHistory[
-                                      query.transferHistory.length - 1
-                                    ]
+                                  query.transferHistory.length - 1
+                                  ]
                                   : null;
                               const reason = latest?.reason?.trim();
                               if (reason) {
@@ -2079,14 +2071,12 @@ const QueryChat = () => {
                     ) : (
                       /* Regular Message - Sent (right) vs Received (left) */
                       <div
-                        className={`flex ${
-                          isOwnMessage ? "justify-end" : "justify-start"
-                        } px-2 sm:px-4`}
+                        className={`flex ${isOwnMessage ? "justify-end" : "justify-start"
+                          } px-2 sm:px-4`}
                       >
                         <div
-                          className={`flex gap-2 max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] min-w-0 ${
-                            isOwnMessage ? "flex-row-reverse" : "flex-row"
-                          }`}
+                          className={`flex gap-2 max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] min-w-0 ${isOwnMessage ? "flex-row-reverse" : "flex-row"
+                            }`}
                         >
                           {/* Avatar - Only show for received messages (left side) */}
                           {!isOwnMessage && (
@@ -2107,11 +2097,10 @@ const QueryChat = () => {
                             )}
                             {/* Message content */}
                             <div
-                              className={`rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 min-w-0 ${
-                                isOwnMessage
+                              className={`rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 min-w-0 ${isOwnMessage
                                   ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white" // Sent messages (right)
                                   : "bg-card  text-foreground border border-border " // Received messages (left)
-                              }`}
+                                }`}
                             >
                               {(() => {
                                 const text = String(msg.message || "");
@@ -2187,11 +2176,10 @@ const QueryChat = () => {
                                   return (
                                     <div
                                       key={`time-${msg._id}`}
-                                      className={`text-xs mt-1 ${
-                                        isOwnMessage
+                                      className={`text-xs mt-1 ${isOwnMessage
                                           ? "text-blue-100"
                                           : "text-muted-foreground "
-                                      }`}
+                                        }`}
                                     >
                                       <div className="flex items-center gap-1 flex-wrap">
                                         <span>{abs}</span>
@@ -2225,7 +2213,7 @@ const QueryChat = () => {
                         // Convert base64 to blob
                         const response = await fetch(base64Image);
                         const blob = await response.blob();
-                        
+
                         const formData = new FormData();
                         const filename = `snapshot-${petitionId}-${Date.now()}.png`;
                         formData.append("screenshot", blob, filename);
@@ -2240,14 +2228,14 @@ const QueryChat = () => {
                           },
                           snapshotRequest?.requester
                             ? {
-                                userId: snapshotRequest.requester.id,
-                                name: snapshotRequest.requester.name,
-                                role: snapshotRequest.requester.role,
-                              }
+                              userId: snapshotRequest.requester.id,
+                              name: snapshotRequest.requester.name,
+                              role: snapshotRequest.requester.role,
+                            }
                             : {},
                         ].filter(Boolean);
                         formData.append("participants", JSON.stringify(participants));
-                        
+
                         const metadata = {
                           source: "camera-snapshot",
                           requesterName: snapshotRequest?.requester?.name,
@@ -2266,7 +2254,7 @@ const QueryChat = () => {
                         } else {
                           toast.warn("Snapshot uploaded but URL missing");
                         }
-                        
+
                         setSnapshotRequest(null);
                       } catch (error) {
                         console.error("Failed to send photo:", error);
@@ -2372,8 +2360,8 @@ const QueryChat = () => {
                   {isWaitingForAssignment
                     ? "Waiting for query assignment. Please wait..."
                     : wasEscalatedByCurrentUser
-                    ? "You cannot message after escalating this query"
-                    : "You are not authorized to send messages in this query."}
+                      ? "You cannot message after escalating this query"
+                      : "You are not authorized to send messages in this query."}
                 </p>
                 {isWaitingForAssignment && (
                   <div className="flex gap-1">
@@ -2541,13 +2529,11 @@ const QueryChat = () => {
             onSubmitSuccess={(feedbackData) => {
               // Add feedback message to chat
               const feedbackMessage = {
-                message: `Customer Feedback:\n⭐ Rating: ${
-                  feedbackData.rating
-                }/5${
-                  feedbackData.comment
+                message: `Customer Feedback:\n⭐ Rating: ${feedbackData.rating
+                  }/5${feedbackData.comment
                     ? `\n💬 Comment: "${feedbackData.comment}"`
                     : ""
-                }`,
+                  }`,
                 sender: "system",
                 senderName: "System",
                 senderRole: "System",
@@ -2681,9 +2667,8 @@ const QueryChat = () => {
         {isAgent && (
           <div
             ref={faqPanelRef}
-            className={`fixed top-0 right-0 h-screen bg-card  border-l border-border  shadow-2xl transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-              showFaqPanel ? "translate-x-0" : "translate-x-full"
-            }`}
+            className={`fixed top-0 right-0 h-screen bg-card  border-l border-border  shadow-2xl transition-transform duration-300 ease-in-out z-50 flex flex-col ${showFaqPanel ? "translate-x-0" : "translate-x-full"
+              }`}
             style={{ width: "630px", maxWidth: "95vw" }}
           >
             {/* FAQ Panel Header */}
@@ -2704,25 +2689,23 @@ const QueryChat = () => {
             <div className="flex border-b border-border ">
               <button
                 onClick={() => setActiveSection("common")}
-                className={`flex-1 px-4 py-2 font-medium transition-colors ${
-                  activeSection === "common"
+                className={`flex-1 px-4 py-2 font-medium transition-colors ${activeSection === "common"
                     ? "bg-primary  text-white border-b-2 border-blue-700 dark:border-teal-600"
                     : isDark
-                    ? "text-gray-300 hover:bg-gray-800"
-                    : "text-muted-foreground hover:bg-muted/50"
-                }`}
+                      ? "text-gray-300 hover:bg-gray-800"
+                      : "text-muted-foreground hover:bg-muted/50"
+                  }`}
               >
                 Common Replies
               </button>
               <button
                 onClick={() => setActiveSection("faqs")}
-                className={`flex-1 px-4 py-2 font-medium transition-colors ${
-                  activeSection === "faqs"
+                className={`flex-1 px-4 py-2 font-medium transition-colors ${activeSection === "faqs"
                     ? "bg-primary  text-white border-b-2 border-blue-700 dark:border-teal-600"
                     : isDark
-                    ? "text-gray-300 hover:bg-gray-800"
-                    : "text-muted-foreground hover:bg-muted/50"
-                }`}
+                      ? "text-gray-300 hover:bg-gray-800"
+                      : "text-muted-foreground hover:bg-muted/50"
+                  }`}
               >
                 FAQs
               </button>
@@ -2749,11 +2732,10 @@ const QueryChat = () => {
                       ? setCommonSearch(e.target.value)
                       : setFaqSearch(e.target.value)
                   }
-                  className={`w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    isDark
+                  className={`w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark
                       ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
                       : "bg-card border-border text-foreground"
-                  }`}
+                    }`}
                 />
               </div>
 
@@ -2768,11 +2750,10 @@ const QueryChat = () => {
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className={`w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      isDark
+                    className={`w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark
                         ? "bg-gray-950 border-gray-700 text-white"
                         : "bg-card border-border text-foreground"
-                    }`}
+                      }`}
                   >
                     <option value="all">All Categories</option>
                     {(activeSection === "common"
@@ -2797,11 +2778,10 @@ const QueryChat = () => {
                     placeholder="Filter by tag..."
                     value={tagFilter}
                     onChange={(e) => setTagFilter(e.target.value)}
-                    className={`w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      isDark
+                    className={`w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark
                         ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
                         : "bg-card border-border text-foreground"
-                    }`}
+                      }`}
                   />
                 </div>
               </div>
@@ -2910,15 +2890,14 @@ const QueryChat = () => {
                   <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                     <BookOpen size={48} className="text-gray-400 mb-3" />
                     <p
-                      className={`${
-                        isDark ? "text-gray-400" : "text-muted-foreground"
-                      }`}
+                      className={`${isDark ? "text-gray-400" : "text-muted-foreground"
+                        }`}
                     >
                       {commonSearch
                         ? "No common replies found"
                         : canEditFaqs
-                        ? "No common replies yet. Add your first one!"
-                        : "No common replies available"}
+                          ? "No common replies yet. Add your first one!"
+                          : "No common replies available"}
                     </p>
                   </div>
                 ) : (
@@ -2926,11 +2905,10 @@ const QueryChat = () => {
                     {filteredCommonReplies.map((reply) => (
                       <div
                         key={reply._id}
-                        className={`p-3 rounded-lg border ${
-                          isDark
+                        className={`p-3 rounded-lg border ${isDark
                             ? "bg-gray-900 border-gray-700"
                             : "bg-muted/50 border-border"
-                        } hover:shadow-md transition-shadow`}
+                          } hover:shadow-md transition-shadow`}
                       >
                         {editingCommonId === reply._id ? (
                           <div>
@@ -2938,11 +2916,10 @@ const QueryChat = () => {
                               defaultValue={reply.text}
                               id={`cr-${reply._id}`}
                               rows={3}
-                              className={`w-full mb-2 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                                isDark
+                              className={`w-full mb-2 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${isDark
                                   ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
                                   : "bg-card border-border text-foreground"
-                              }`}
+                                }`}
                             />
                             <div className="flex gap-2">
                               <button
@@ -2959,11 +2936,10 @@ const QueryChat = () => {
                               </button>
                               <button
                                 onClick={() => setEditingCommonId(null)}
-                                className={`flex-1 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
-                                  isDark
+                                className={`flex-1 px-3 py-1.5 text-sm border rounded-lg transition-colors ${isDark
                                     ? "border-gray-700 text-gray-300 hover:bg-gray-700"
                                     : "border-border text-gray-700 hover:bg-muted"
-                                }`}
+                                  }`}
                               >
                                 Cancel
                               </button>
@@ -2974,44 +2950,43 @@ const QueryChat = () => {
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
                                 <p
-                                  className={`text-sm whitespace-pre-wrap ${
-                                    isDark ? "text-gray-300" : "text-gray-700"
-                                  }`}
+                                  className={`text-sm whitespace-pre-wrap ${isDark ? "text-gray-300" : "text-gray-700"
+                                    }`}
                                 >
                                   {reply.text}
                                 </p>
                                 {/* Category and Tags Display */}
                                 {(reply.category ||
                                   (reply.tags && reply.tags.length > 0)) && (
-                                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                    {reply.category && (
-                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
-                                        <FolderOpen
-                                          size={9}
-                                          className="text-green-600 "
-                                        />
-                                        <span className="text-[10px] font-medium bg-primary dark:text-green-300">
-                                          {reply.category}
-                                        </span>
-                                      </span>
-                                    )}
-                                    {reply.tags &&
-                                      reply.tags.map((tag, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
-                                        >
-                                          <Tag
-                                            size={8}
-                                            className="text-foreground "
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                      {reply.category && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
+                                          <FolderOpen
+                                            size={9}
+                                            className="text-green-600 "
                                           />
-                                          <span className="text-[10px] bg-primary dark:text-blue-300">
-                                            {tag}
+                                          <span className="text-[10px] font-medium bg-primary dark:text-green-300">
+                                            {reply.category}
                                           </span>
                                         </span>
-                                      ))}
-                                  </div>
-                                )}
+                                      )}
+                                      {reply.tags &&
+                                        reply.tags.map((tag, idx) => (
+                                          <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
+                                          >
+                                            <Tag
+                                              size={8}
+                                              className="text-foreground "
+                                            />
+                                            <span className="text-[10px] bg-primary dark:text-blue-300">
+                                              {tag}
+                                            </span>
+                                          </span>
+                                        ))}
+                                    </div>
+                                  )}
                               </div>
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 <button
@@ -3062,88 +3037,84 @@ const QueryChat = () => {
                   </div>
                 )
               ) : // FAQs Section
-              filteredFaqs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                  <BookOpen size={48} className="text-gray-400 mb-2" />
-                  <p
-                    className={`${isDark ? "text-gray-400" : "text-muted-foreground"}`}
-                  >
-                    {faqSearch
-                      ? "No FAQs found"
-                      : canEditFaqs
-                      ? "No FAQs yet. Add your first FAQ!"
-                      : "No FAQs available"}
-                  </p>
-                </div>
-              ) : (
-                <div className="p-2 space-y-2">
-                  {filteredFaqs.map((faq) => (
-                    <div
-                      key={faq._id}
-                      className={`p-3 rounded-lg border ${
-                        isDark
-                          ? "bg-gray-900 border-gray-700"
-                          : "bg-muted/50 border-border"
-                      } hover:shadow-md transition-shadow`}
+                filteredFaqs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                    <BookOpen size={48} className="text-gray-400 mb-2" />
+                    <p
+                      className={`${isDark ? "text-gray-400" : "text-muted-foreground"}`}
                     >
-                      {editingFaqId === faq._id ? (
-                        <div>
-                          <input
-                            type="text"
-                            defaultValue={faq.question}
-                            id={`q-${faq._id}`}
-                            className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              isDark
-                                ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
-                                : "bg-card border-border text-foreground"
-                            }`}
-                          />
-                          <textarea
-                            defaultValue={faq.answer}
-                            id={`a-${faq._id}`}
-                            rows={3}
-                            className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                              isDark
-                                ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
-                                : "bg-card border-border text-foreground"
-                            }`}
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                const q = document.getElementById(
-                                  `q-${faq._id}`
-                                ).value;
-                                const a = document.getElementById(
-                                  `a-${faq._id}`
-                                ).value;
-                                handleUpdateFaq(faq._id, q, a);
-                              }}
-                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1 text-sm bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
-                            >
-                              <Save size={12} />
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingFaqId(null)}
-                              className={`flex-1 px-3 py-1 text-sm border rounded-lg transition-colors ${
-                                isDark
-                                  ? "border-gray-700 text-gray-300 hover:bg-gray-700"
-                                  : "border-border text-gray-700 hover:bg-muted"
-                              }`}
-                            >
-                              Cancel
-                            </button>
+                      {faqSearch
+                        ? "No FAQs found"
+                        : canEditFaqs
+                          ? "No FAQs yet. Add your first FAQ!"
+                          : "No FAQs available"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-2 space-y-2">
+                    {filteredFaqs.map((faq) => (
+                      <div
+                        key={faq._id}
+                        className={`p-3 rounded-lg border ${isDark
+                            ? "bg-gray-900 border-gray-700"
+                            : "bg-muted/50 border-border"
+                          } hover:shadow-md transition-shadow`}
+                      >
+                        {editingFaqId === faq._id ? (
+                          <div>
+                            <input
+                              type="text"
+                              defaultValue={faq.question}
+                              id={`q-${faq._id}`}
+                              className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark
+                                  ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
+                                  : "bg-card border-border text-foreground"
+                                }`}
+                            />
+                            <textarea
+                              defaultValue={faq.answer}
+                              id={`a-${faq._id}`}
+                              rows={3}
+                              className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${isDark
+                                  ? "bg-gray-950 border-gray-700 text-white placeholder-gray-500"
+                                  : "bg-card border-border text-foreground"
+                                }`}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  const q = document.getElementById(
+                                    `q-${faq._id}`
+                                  ).value;
+                                  const a = document.getElementById(
+                                    `a-${faq._id}`
+                                  ).value;
+                                  handleUpdateFaq(faq._id, q, a);
+                                }}
+                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1 text-sm bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
+                              >
+                                <Save size={12} />
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingFaqId(null)}
+                                className={`flex-1 px-3 py-1 text-sm border rounded-lg transition-colors ${isDark
+                                    ? "border-gray-700 text-gray-300 hover:bg-gray-700"
+                                    : "border-border text-gray-700 hover:bg-muted"
+                                  }`}
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <div className="flex items-start justify-between gap-1 mb-2">
-                            <h4 className="font-semibold text-sm text-foreground ">
-                              Q: {faq.question}
-                            </h4>
-                            {/* ⚠️ ADMIN ONLY: Edit/Delete buttons - Hidden for TL/QA/Agent */}
-                            {/* {canEditFaqs && (
+                        ) : (
+                          <div>
+                            <div className="flex items-start justify-between gap-1 mb-2">
+                              <h4 className="font-semibold text-sm text-foreground ">
+                                Q: {faq.question}
+                              </h4>
+                              {/* ⚠️ ADMIN ONLY: Edit/Delete buttons - Hidden for TL/QA/Agent */}
+                              {/* {canEditFaqs && (
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => setEditingFaqId(faq._id)}
@@ -3161,78 +3132,77 @@ const QueryChat = () => {
                                 </button>
                               </div>
                             )} */}
-                          </div>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <p
-                                className={`text-sm whitespace-pre-wrap ${
-                                  isDark ? "text-gray-300" : "text-gray-700"
-                                }`}
-                              >
-                                A: {faq.answer}
-                              </p>
-                              {/* Category and Tags Display */}
-                              {(faq.category ||
-                                (faq.tags && faq.tags.length > 0)) && (
-                                <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                  {faq.category && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
-                                      <FolderOpen
-                                        size={9}
-                                        className="text-green-600 "
-                                      />
-                                      <span className="text-[10px] font-medium bg-primary dark:text-green-300">
-                                        {faq.category}
-                                      </span>
-                                    </span>
-                                  )}
-                                  {faq.tags &&
-                                    faq.tags.map((tag, idx) => (
-                                      <span
-                                        key={idx}
-                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
-                                      >
-                                        <Tag
-                                          size={8}
-                                          className="text-foreground "
-                                        />
-                                        <span className="text-[10px] bg-primary dark:text-blue-300">
-                                          {tag}
+                            </div>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p
+                                  className={`text-sm whitespace-pre-wrap ${isDark ? "text-gray-300" : "text-gray-700"
+                                    }`}
+                                >
+                                  A: {faq.answer}
+                                </p>
+                                {/* Category and Tags Display */}
+                                {(faq.category ||
+                                  (faq.tags && faq.tags.length > 0)) && (
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                      {faq.category && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
+                                          <FolderOpen
+                                            size={9}
+                                            className="text-green-600 "
+                                          />
+                                          <span className="text-[10px] font-medium bg-primary dark:text-green-300">
+                                            {faq.category}
+                                          </span>
                                         </span>
-                                      </span>
-                                    ))}
-                                </div>
-                              )}
+                                      )}
+                                      {faq.tags &&
+                                        faq.tags.map((tag, idx) => (
+                                          <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
+                                          >
+                                            <Tag
+                                              size={8}
+                                              className="text-foreground "
+                                            />
+                                            <span className="text-[10px] bg-primary dark:text-blue-300">
+                                              {tag}
+                                            </span>
+                                          </span>
+                                        ))}
+                                    </div>
+                                  )}
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <button
+                                  onClick={() => handleCopyAnswer(faq.answer)}
+                                  className="p-1.5 bg-muted  hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                                  title="Copy"
+                                >
+                                  <Copy
+                                    size={14}
+                                    className="text-gray-700 dark:text-gray-300"
+                                  />
+                                </button>
+                                <button
+                                  onClick={() => handleInsertAnswer(faq.answer)}
+                                  className="p-1.5 bg-primary hover:bg-primary/90 text-white rounded transition-colors"
+                                  title="Insert"
+                                >
+                                  <ArrowUpCircle size={14} />
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <button
-                                onClick={() => handleCopyAnswer(faq.answer)}
-                                className="p-1.5 bg-muted  hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                                title="Copy"
-                              >
-                                <Copy
-                                  size={14}
-                                  className="text-gray-700 dark:text-gray-300"
-                                />
-                              </button>
-                              <button
-                                onClick={() => handleInsertAnswer(faq.answer)}
-                                className="p-1.5 bg-primary hover:bg-primary/90 text-white rounded transition-colors"
-                                title="Insert"
-                              >
-                                <ArrowUpCircle size={14} />
-                              </button>
-                            </div>
-                          </div>
-                          {/* <span className={`text-xs mt-1 ${isDark ? 'text-gray-300' : 'text-gray-400'}`}>
+                            {/* <span className={`text-xs mt-1 ${isDark ? 'text-gray-300' : 'text-gray-400'}`}>
                             By {faq.createdByName}
                           </span> */}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         )}
@@ -3242,9 +3212,8 @@ const QueryChat = () => {
       {/* Customer Details Panel - Sliding from right */}
       {showCustomerPanel && (
         <div
-          className={`w-[650px] flex-shrink-0 transition-all duration-300 ease-in-out transform ${
-            showCustomerPanel ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`w-[650px] flex-shrink-0 transition-all duration-300 ease-in-out transform ${showCustomerPanel ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <CustomerDetailsPanel
             isOpen={showCustomerPanel}

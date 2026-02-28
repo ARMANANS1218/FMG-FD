@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Send, Phone, Video, MoreVertical, CheckCircle, 
-  XCircle, Clock, User, RefreshCw, AlertCircle, /* Paperclip, */ Smile, Camera, 
-  BookOpen, PanelRightClose, PanelRightOpen, Search, Copy, Plus, Edit, Trash2, Save, X, ArrowUpCircle 
+import {
+  ArrowLeft, Send, Phone, Video, MoreVertical, CheckCircle,
+  XCircle, Clock, User, RefreshCw, AlertCircle, /* Paperclip, */ Smile, Camera,
+  BookOpen, PanelRightClose, PanelRightOpen, Search, Copy, Plus, Edit, Trash2, Save, X, ArrowUpCircle
 } from 'lucide-react';
 import { useGetQueryByPetitionIdQuery, useSendQueryMessageMutation, useResolveQueryMutation, useAcceptQueryMutation } from '../../../features/query/queryApi';
 import { useGetEvaluationQuery } from '../../../features/qa/qaEvaluationApi';
@@ -21,7 +21,7 @@ import { getSocket } from '../../../hooks/socket';
 import EscalationTimeline from '../../../components/Escalations/EscalationTimeline';
 import ColorModeContext from '../../../context/ColorModeContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 const IMG_BASE_URL = `${API_URL}/uploads/profile`;
 
 // Utility function to get proper display name from customer information
@@ -30,7 +30,7 @@ const getDisplayName = (customerName, customerEmail) => {
   if (!customerName && customerEmail) {
     return customerEmail.split('@')[0];
   }
-  
+
   // If customerName exists but looks like email prefix, try to make it more readable
   if (customerName) {
     // Check if it's just an email prefix (no spaces, all lowercase, might have numbers)
@@ -39,7 +39,7 @@ const getDisplayName = (customerName, customerEmail) => {
       // e.g., "john.doe123" -> "John Doe"
       const cleaned = customerName.replace(/[0-9]/g, ''); // Remove numbers
       const parts = cleaned.split(/[._-]/); // Split by common separators
-      
+
       if (parts.length > 1) {
         // Capitalize each part: ["john", "doe"] -> "John Doe"
         return parts
@@ -50,11 +50,11 @@ const getDisplayName = (customerName, customerEmail) => {
         return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
       }
     }
-    
+
     // If it already looks like a proper name (has spaces, mixed case), return as is
     return customerName;
   }
-  
+
   return 'Guest User';
 };
 
@@ -89,7 +89,7 @@ export default function QueryChat() {
   const [isAddingCommon, setIsAddingCommon] = useState(false);
   const [editingCommonId, setEditingCommonId] = useState(null);
   const faqPanelRef = useRef(null);
-  
+
   const mainSocket = getSocket();
   const colorMode = useContext(ColorModeContext);
   const isDark = colorMode?.mode === 'dark';
@@ -106,16 +106,16 @@ export default function QueryChat() {
   const query = queryData?.data;
   const isCustomer = currentUser?.role === 'Customer';
   const isAgent = ['Agent', 'QA', 'Admin', 'TL'].includes(currentUser?.role);
-  
+
   // FAQ API hooks (must be after isAgent is defined)
   const { data: faqsData } = useGetFaqsQuery(undefined, { skip: !isAgent });
   const [createFaq] = useCreateFaqMutation();
   const [updateFaq] = useUpdateFaqMutation();
   const [deleteFaq] = useDeleteFaqMutation();
-  
+
   const faqs = faqsData?.data?.filter(f => f.type === 'faq') || [];
   const commonReplies = faqsData?.data?.filter(f => f.type === 'common') || [];
-  const isQATeam = ['QA','TL'].includes(currentUser?.role);
+  const isQATeam = ['QA', 'TL'].includes(currentUser?.role);
   // Only QA can set weightage (TL can only view)
   const isQA = currentUser?.role === 'QA';
   const isTL = currentUser?.role === 'TL';
@@ -125,12 +125,12 @@ export default function QueryChat() {
   // Only Admin can Add/Edit/Delete FAQs from Admin Panel > FAQ Management
   const canEditFaqs = false; // Changed from: isQA || isTL - Now only Admin can manage FAQs
   const canSetWeightage = isQA; // Only QA can submit weightage
-  
+
   // Extract assignedTo ID (handle both object and string)
-  const assignedToId = typeof query?.assignedTo === 'object' 
-    ? query?.assignedTo?._id 
+  const assignedToId = typeof query?.assignedTo === 'object'
+    ? query?.assignedTo?._id
     : query?.assignedTo;
-  
+
   const canResolve = isAgent && query?.status !== 'Resolved' && assignedToId === currentUser?._id;
   const isAssignedAgent = isAgent && assignedToId === currentUser?._id;
   // QA/TL can rate regardless of assignment once query exists
@@ -142,17 +142,17 @@ export default function QueryChat() {
     result: evalData.data.result,
     category: evalData.data.performanceCategory || evalData.data.result // Fallback to result if category not available
   } : null;
-  
+
   // Check if user is authorized to send messages
   // For agents: must be assigned OR waiting for assignment (can't message if not assigned or if escalated away)
   // For customers: can always message
   const isQueryAccepted = assignedToId ? true : false; // Query is accepted by someone
-  
+
   // Check if current user was the one who escalated (transferred) the query
-  const wasEscalatedByCurrentUser = isAgent && query?.transferHistory?.some(transfer => 
+  const wasEscalatedByCurrentUser = isAgent && query?.transferHistory?.some(transfer =>
     transfer.from === currentUser?._id && transfer.status !== 'Accepted'
   );
-  
+
   // Agent can message only if: currently assigned AND not the one who escalated it away
   const canSendMessage = isCustomer || (isAgent && assignedToId === currentUser?._id && !wasEscalatedByCurrentUser);
   const isWaitingForAssignment = isAgent && !assignedToId;
@@ -177,7 +177,7 @@ export default function QueryChat() {
   const canMakeCalls = isAgent && assignedToId === currentUser?._id && query?.status !== 'Resolved' && query?.status !== 'Expired';
 
   // Check if there's a pending transfer request for this user
-  const hasPendingTransfer = isAgent && query?.status === 'Transferred' && query?.transferHistory?.some(transfer => 
+  const hasPendingTransfer = isAgent && query?.status === 'Transferred' && query?.transferHistory?.some(transfer =>
     transfer.status === 'Requested' && transfer.toAgent === currentUser?._id
   );
 
@@ -185,7 +185,7 @@ export default function QueryChat() {
   useEffect(() => {
     if (!currentUser?._id || !petitionId) return;
 
-    const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
     socketRef.current = io(`${SOCKET_URL}/query`, {
       auth: { token: localStorage.getItem('token') }
     });
@@ -207,27 +207,27 @@ export default function QueryChat() {
             // Primary check: by unique _id
             if (msg._id && data.message._id && msg._id === data.message._id) return true;
             // Secondary check: matching message text/sender for optimistic messages
-            if (msg.isOptimistic && 
-                msg.message === data.message.message && 
-                (String(msg.sender) === String(data.message.sender) || 
-                 String(msg.sender) === String(data.message.sender?._id))) {
+            if (msg.isOptimistic &&
+              msg.message === data.message.message &&
+              (String(msg.sender) === String(data.message.sender) ||
+                String(msg.sender) === String(data.message.sender?._id))) {
               return true;
             }
             return false;
           });
-          
+
           if (exists) {
             // Replace optimistic message with real one from server
-            return prev.map(msg => 
-              (msg.isOptimistic && 
-               msg.message === data.message.message && 
-               (String(msg.sender) === String(data.message.sender) || 
-                String(msg.sender) === String(data.message.sender?._id)))
-                ? data.message 
+            return prev.map(msg =>
+              (msg.isOptimistic &&
+                msg.message === data.message.message &&
+                (String(msg.sender) === String(data.message.sender) ||
+                  String(msg.sender) === String(data.message.sender?._id)))
+                ? data.message
                 : msg
             );
           }
-          
+
           return [...prev, data.message];
         });
         scrollToBottom();
@@ -267,7 +267,7 @@ export default function QueryChat() {
       if (data.petitionId === petitionId) {
         toast.success('Query has been resolved!');
         refetch();
-        
+
         // Show feedback modal for customers after 1 second
         if (isCustomer && !query?.feedback) {
           setTimeout(() => {
@@ -298,15 +298,15 @@ export default function QueryChat() {
   // Combine API messages with local real-time messages
   useEffect(() => {
     if (query?.messages) {
-      console.log(`🔄 API refetch received ${query.messages.length} messages:`, 
+      console.log(`🔄 API refetch received ${query.messages.length} messages:`,
         query.messages.map(m => ({ _id: m._id, text: m.message?.substring(0, 30), time: formatMessageTime(m.timestamp) }))
       );
-      
+
       setLocalMessages((prev) => {
         // Keep optimistic messages, merge with server messages
         const serverMessages = query.messages;
         const optimisticMessages = prev.filter(msg => msg.isOptimistic);
-        
+
         // ENHANCED DEDUPLICATION: Remove duplicates by _id
         const seenIds = new Set();
         const deduplicatedServerMessages = serverMessages.filter(msg => {
@@ -318,18 +318,18 @@ export default function QueryChat() {
           seenIds.add(msg._id);
           return true;
         });
-        
+
         console.log(`✅ After API dedup: ${deduplicatedServerMessages.length} unique server messages`);
-        
+
         // If we have optimistic messages, merge them with deduplicated server messages
         if (optimisticMessages.length > 0) {
           const allMessages = [...deduplicatedServerMessages];
           optimisticMessages.forEach(optMsg => {
-            const exists = deduplicatedServerMessages.some(serverMsg => 
+            const exists = deduplicatedServerMessages.some(serverMsg =>
               serverMsg._id === optMsg._id ||
-              (serverMsg.message === optMsg.message && 
-               (String(serverMsg.sender) === String(optMsg.sender) || 
-                String(serverMsg.sender?._id) === String(optMsg.sender)))
+              (serverMsg.message === optMsg.message &&
+                (String(serverMsg.sender) === String(optMsg.sender) ||
+                  String(serverMsg.sender?._id) === String(optMsg.sender)))
             );
             if (!exists) {
               allMessages.push(optMsg);
@@ -338,7 +338,7 @@ export default function QueryChat() {
           console.log(`🔀 Merged: ${deduplicatedServerMessages.length} server + ${optimisticMessages.filter(m => !deduplicatedServerMessages.find(s => s._id === m._id)).length} optimistic = ${allMessages.length} total`);
           return allMessages;
         }
-        
+
         // No optimistic messages, just use deduplicated server messages
         console.log(`📦 Using only server messages: ${deduplicatedServerMessages.length} total`);
         return deduplicatedServerMessages;
@@ -350,13 +350,13 @@ export default function QueryChat() {
   // This is kept for completeness but the global listener takes priority
   useEffect(() => {
     if (!mainSocket || !isCustomer) return;
-    
+
     const onIncomingCall = ({ roomId, from, callType }) => {
       console.log('📞 Incoming call detected:', { roomId, from, callType });
     };
-    
+
     mainSocket.on('call:incoming', onIncomingCall);
-    
+
     return () => {
       mainSocket.off('call:incoming', onIncomingCall);
     };
@@ -436,7 +436,7 @@ export default function QueryChat() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    
+
     if (!message.trim() || isSending) return;
 
     const messageText = message.trim();
@@ -465,7 +465,7 @@ export default function QueryChat() {
       // Send via API (backend will emit socket event after saving)
       const response = await sendQueryMessage({ petitionId, message: messageText }).unwrap();
       console.log('✅ Message sent, response:', response);
-      
+
       // The socket event 'new-query-message' will handle replacing optimistic message
       // Backend emits socket event which will be received by all users including sender
     } catch (error) {
@@ -486,17 +486,17 @@ export default function QueryChat() {
 
     try {
       await resolveQuery(petitionId).unwrap();
-      
+
       if (socketRef.current && currentUser) {
         socketRef.current.emit('resolve-query', {
           petitionId,
           agentId: currentUser._id
         });
       }
-      
+
       toast.success('Query resolved successfully!');
       refetch();
-      
+
       // Show feedback modal immediately for customer to provide feedback
       setTimeout(() => {
         setShowFeedbackModal(true);
@@ -510,7 +510,7 @@ export default function QueryChat() {
   const handleVideoCall = async () => {
     // Get customer ID from query (it's stored as 'customer', not 'customerId')
     const customerId = typeof query?.customer === 'object' ? query?.customer?._id : query?.customer;
-    
+
     if (!canMakeCalls || !customerId) {
       toast.error('Unable to initiate call - you must be assigned to this query');
       return;
@@ -519,7 +519,7 @@ export default function QueryChat() {
     try {
       const res = await createCall({ receiverId: customerId }).unwrap();
       const roomId = res?.data?.roomId;
-      
+
       // Navigate to full-page video call
       const params = new URLSearchParams({
         roomId,
@@ -528,16 +528,16 @@ export default function QueryChat() {
         userName: query.customerName || 'Customer',
         initiator: 'true'  // Mark as call initiator
       });
-      
+
       navigate(`/video-call?${params.toString()}`);
-      
+
       // Emit call init event
-      mainSocket.emit('call:init', { 
-        roomId, 
-        from: currentUser._id, 
-        receiverId: customerId, 
+      mainSocket.emit('call:init', {
+        roomId,
+        from: currentUser._id,
+        receiverId: customerId,
         callType: 'video',
-        petitionId 
+        petitionId
       });
     } catch (err) {
       console.error('Video call error:', err);
@@ -619,7 +619,7 @@ export default function QueryChat() {
   const handleAudioCall = async () => {
     // Get customer ID from query (it's stored as 'customer', not 'customerId')
     const customerId = typeof query?.customer === 'object' ? query?.customer?._id : query?.customer;
-    
+
     if (!canMakeCalls || !customerId) {
       toast.error('Unable to initiate call - you must be assigned to this query');
       return;
@@ -628,7 +628,7 @@ export default function QueryChat() {
     try {
       const res = await createCall({ receiverId: customerId }).unwrap();
       const roomId = res?.data?.roomId;
-      
+
       // Navigate to full-page audio call (same as video call but with type=audio)
       const params = new URLSearchParams({
         roomId,
@@ -637,16 +637,16 @@ export default function QueryChat() {
         userName: getDisplayName(query.customerName, query.customerEmail) || 'Customer',
         initiator: 'true'  // Mark as call initiator
       });
-      
+
       navigate(`/video-call?${params.toString()}`);
-      
+
       // Emit call init event
-      mainSocket.emit('call:init', { 
-        roomId, 
-        from: currentUser._id, 
-        receiverId: customerId, 
+      mainSocket.emit('call:init', {
+        roomId,
+        from: currentUser._id,
+        receiverId: customerId,
         callType: 'audio',
-        petitionId 
+        petitionId
       });
     } catch (err) {
       console.error('Audio call error:', err);
@@ -660,7 +660,7 @@ export default function QueryChat() {
     try {
       await acceptQuery(petitionId).unwrap();
       toast.success('Query accepted successfully! Opening query...');
-      
+
       // Wait a moment for backend to update, then navigate to the query
       setTimeout(() => {
         // Navigate to the accepted query based on user role
@@ -728,7 +728,7 @@ export default function QueryChat() {
   // IMPORTANT: Keep hooks before any early returns to preserve hook call order across renders
   const displayMessages = React.useMemo(() => {
     if (!Array.isArray(localMessages)) return [];
-    
+
     // FINAL DEDUPLICATION - Remove any duplicates by _id before filtering  
     const seenIds = new Set();
     const deduplicated = localMessages.filter(msg => {
@@ -740,13 +740,13 @@ export default function QueryChat() {
       seenIds.add(msg._id);
       return true;
     });
-    
+
     // DEBUG: Log final message count
     console.log(`📊 displayMessages prepared: ${deduplicated.length} unique messages from ${localMessages.length} total`);
     deduplicated.forEach((msg, idx) => {
       console.log(`  [${idx}] ${msg._id} - "${msg.message?.substring(0, 30)}" - ${formatMessageTime(msg.timestamp)}`);
     });
-    
+
     if (!isCustomer) return deduplicated;
 
     // For customers (and widget users) hide internal workflow chatter and strip escalation reasons
@@ -766,7 +766,7 @@ export default function QueryChat() {
         // Strip reason portion if present for escalation/transfer related system message
         if (/(escalat|transfer)/i.test(text) && /reason:/i.test(text)) {
           // Remove 'Reason: ...' segment (everything after Reason:)
-          text = text.replace(/reason:.*$/i, '').replace(/[\s\-–]+$/,'').trim();
+          text = text.replace(/reason:.*$/i, '').replace(/[\s\-–]+$/, '').trim();
           // If becomes empty, drop message entirely by returning a sentinel
           if (!text) return { ...m, __hidden: true };
           return { ...m, message: text };
@@ -940,7 +940,7 @@ export default function QueryChat() {
     );
   }
 
-  
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-card  overflow-x-hidden overflow-y-auto relative">
@@ -969,23 +969,22 @@ export default function QueryChat() {
                 {/* Avatar */}
                 <div className="relative">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
-                    {isCustomer 
+                    {isCustomer
                       ? query.assignedToName?.[0] || 'A'
                       : getDisplayName(query.customerName, query.customerEmail)?.[0] || 'C'
                     }
                   </div>
-                  <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 ${
-                    query.status === 'In Progress' || query.status === 'Accepted' 
-                      ? 'bg-primary/50' 
+                  <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 ${query.status === 'In Progress' || query.status === 'Accepted'
+                      ? 'bg-primary/50'
                       : 'bg-gray-400'
-                  } border-2 border-white dark:border-gray-800 rounded-full`}></div>
+                    } border-2 border-white dark:border-gray-800 rounded-full`}></div>
                 </div>
 
                 {/* Info */}
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-bold text-foreground">
-                      {isCustomer 
+                      {isCustomer
                         ? query.assignedToName || 'Waiting for Agent'
                         : getDisplayName(query.customerName, query.customerEmail)
                       }
@@ -995,14 +994,13 @@ export default function QueryChat() {
                     </span>
                     {evaluationSummary && (
                       <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white ml-1 ${
-                          evaluationSummary.category === 'Excellent' ? 'bg-green-600' :
-                          evaluationSummary.category === 'Good' ? 'bg-primary' :
-                          evaluationSummary.category === 'Average' ? 'bg-yellow-600' :
-                          evaluationSummary.category === 'Poor' ? 'bg-orange-600' :
-                          evaluationSummary.category === 'Very Poor' ? 'bg-red-600' :
-                          'bg-gray-600'
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white ml-1 ${evaluationSummary.category === 'Excellent' ? 'bg-green-600' :
+                            evaluationSummary.category === 'Good' ? 'bg-primary' :
+                              evaluationSummary.category === 'Average' ? 'bg-yellow-600' :
+                                evaluationSummary.category === 'Poor' ? 'bg-orange-600' :
+                                  evaluationSummary.category === 'Very Poor' ? 'bg-red-600' :
+                                    'bg-gray-600'
+                          }`}
                         title={`Performance: ${evaluationSummary.category} - ${evaluationSummary.score}%`}
                       >
                         {evaluationSummary.category} {evaluationSummary.score}%
@@ -1053,7 +1051,7 @@ export default function QueryChat() {
                   <span className="sm:hidden">Esc</span>
                 </button>
               )}
-              
+
               {/* Resolve Button - Only show when assigned and no pending transfer */}
               {canResolve && !hasPendingTransfer && (
                 <button
@@ -1068,7 +1066,7 @@ export default function QueryChat() {
                   <span className="sm:hidden">Resolve</span>
                 </button>
               )}
-              
+
               {/* Audio and Video call icons commented out per requirement */}
               {/* {canMakeCalls && (
                 <>
@@ -1086,57 +1084,56 @@ export default function QueryChat() {
                   >
                     <Video size={20} className="text-gray-700 dark:text-gray-300" />
                   </button> */}
-                  {/* Camera snapshot (no call) */}
-                  {canMakeCalls && isAssignedAgent && (
-                    <button 
-                      onClick={requestCustomerSnapshot}
-                      className="p-2 hover:bg-muted dark:hover:bg-gray-700 rounded-lg transition-colors hidden md:block"
-                      title="Request Camera Snapshot"
-                    >
-                      <Camera size={20} className="text-gray-700 dark:text-gray-300" />
-                    </button>
-                  )}
-                {/* </>
+              {/* Camera snapshot (no call) */}
+              {canMakeCalls && isAssignedAgent && (
+                <button
+                  onClick={requestCustomerSnapshot}
+                  className="p-2 hover:bg-muted dark:hover:bg-gray-700 rounded-lg transition-colors hidden md:block"
+                  title="Request Camera Snapshot"
+                >
+                  <Camera size={20} className="text-gray-700 dark:text-gray-300" />
+                </button>
+              )}
+              {/* </>
               )} */}
               {/* Weightage button (Only QA can set/edit weightage, TL removed) */}
               {isQA && (
                 <button
                   onClick={() => setShowRateModal(true)}
                   disabled={alreadyRated && !canSetWeightage}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium shadow-lg ${
-                    alreadyRated 
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium shadow-lg ${alreadyRated
                       ? 'bg-primary hover:bg-primary/90 text-white'
                       : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white'
-                  }`}
+                    }`}
                 >
                   <AlertCircle size={18} />
                   {alreadyRated ? 'View/Edit Weightage' : 'Set Weightage'}
                 </button>
               )}
               {/* TL cannot set weightage - button removed per requirement */}
-              
+
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setShowActions(!showActions)}
                   className="p-2 hover:bg-muted dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <MoreVertical size={20} className="text-gray-700 dark:text-gray-300" />
                 </button>
 
-              {/* FAQ Panel Toggle Button */}
-              {isAgent && (
-                <button 
-                  onClick={() => setShowFaqPanel(!showFaqPanel)}
-                  className="p-2 hover:bg-muted dark:hover:bg-gray-700 rounded-lg transition-colors ml-2"
-                  title="FAQs"
-                >
-                  {showFaqPanel ? (
-                    <PanelRightClose size={20} className="text-gray-700 dark:text-gray-300" />
-                  ) : (
-                    <PanelRightOpen size={20} className="text-gray-700 dark:text-gray-300" />
-                  )}
-                </button>
-              )}
+                {/* FAQ Panel Toggle Button */}
+                {isAgent && (
+                  <button
+                    onClick={() => setShowFaqPanel(!showFaqPanel)}
+                    className="p-2 hover:bg-muted dark:hover:bg-gray-700 rounded-lg transition-colors ml-2"
+                    title="FAQs"
+                  >
+                    {showFaqPanel ? (
+                      <PanelRightClose size={20} className="text-gray-700 dark:text-gray-300" />
+                    ) : (
+                      <PanelRightOpen size={20} className="text-gray-700 dark:text-gray-300" />
+                    )}
+                  </button>
+                )}
 
                 {/* Actions Dropdown */}
                 {showActions && (
@@ -1214,11 +1211,10 @@ export default function QueryChat() {
                             setShowActions(false);
                             setShowRateModal(true);
                           }}
-                          className={`w-full px-4 py-2 text-left transition-colors flex items-center gap-2 ${
-                            alreadyRated 
+                          className={`w-full px-4 py-2 text-left transition-colors flex items-center gap-2 ${alreadyRated
                               ? 'hover:bg-muted dark:hover:bg-gray-700 text-foreground '
                               : 'hover:bg-muted dark:hover:bg-gray-700 text-purple-600 dark:text-purple-400'
-                          }`}
+                            }`}
                         >
                           <AlertCircle size={18} />
                           {alreadyRated ? 'View/Edit Weightage' : 'Set Weightage'}
@@ -1265,10 +1261,10 @@ export default function QueryChat() {
                   <span className="text-gray-700 dark:text-gray-300">QA Eval:</span>{' '}
                   <span className={
                     evaluationSummary.category === 'Excellent' ? 'text-green-600 ' :
-                    evaluationSummary.category === 'Good' ? 'text-foreground ' :
-                    evaluationSummary.category === 'Average' ? 'text-yellow-600 dark:text-yellow-400' :
-                    evaluationSummary.category === 'Poor' ? 'text-orange-600 dark:text-orange-400' :
-                    'text-red-600 dark:text-red-400'
+                      evaluationSummary.category === 'Good' ? 'text-foreground ' :
+                        evaluationSummary.category === 'Average' ? 'text-yellow-600 dark:text-yellow-400' :
+                          evaluationSummary.category === 'Poor' ? 'text-orange-600 dark:text-orange-400' :
+                            'text-red-600 dark:text-red-400'
                   }>
                     {evaluationSummary.score}% ({evaluationSummary.category})
                   </span>
@@ -1290,7 +1286,7 @@ export default function QueryChat() {
             {/* Full-width Escalation Panel (collapsible) */}
             {isAgent && showEscDropdown && (
               <div className="mt-3 w-full">
-                <div className={`w-full rounded-xl ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-card border border-border'} shadow-inner`}> 
+                <div className={`w-full rounded-xl ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-card border border-border'} shadow-inner`}>
                   <div className="p-2">
                     <EscalationTimeline petitionId={petitionId} isDark={isDark} />
                   </div>
@@ -1313,7 +1309,7 @@ export default function QueryChat() {
                 Not Authorized
               </h3>
               <p className="text-muted-foreground dark:text-gray-300 text-lg">
-                {isWaitingForAssignment 
+                {isWaitingForAssignment
                   ? 'You are not yet assigned to this query. Please wait for assignment.'
                   : 'You are not authorized to message in this chat'
                 }
@@ -1322,164 +1318,162 @@ export default function QueryChat() {
           </div>
         </div>
       ) : (
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-hide">
-  {displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-20 h-20 bg-gray-200  rounded-full flex items-center justify-center mb-4">
-              <User size={40} className="text-gray-400 dark:text-muted-foreground" />
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-hide">
+          {displayMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="w-20 h-20 bg-gray-200  rounded-full flex items-center justify-center mb-4">
+                <User size={40} className="text-gray-400 dark:text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Start the conversation
+              </h3>
+              <p className="text-muted-foreground ">
+                Send a message to begin chatting
+              </p>
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Start the conversation
-            </h3>
-            <p className="text-muted-foreground ">
-              Send a message to begin chatting
-            </p>
-          </div>
-        ) : (
-          <>
-            {displayMessages.map((msg, index) => {
-              // Determine if this is the current user's message (sender)
-              // msg.sender might be populated object {_id, name...} or just an ID string
-              const senderId = typeof msg.sender === 'object' ? msg.sender?._id : msg.sender;
-              const isOwnMessage = String(senderId) === String(currentUser?._id);
-              const isSystemMessage = msg.senderRole === 'System';
-              
-              // Debug logging - show first and last message
-              if (index === 0 || index === displayMessages.length - 1) {
-                console.log(`� Message ${index}: "${msg.message?.substring(0, 40)}" | ID: ${msg._id} | Time: ${formatMessageTime(msg.timestamp)}`);
-              }
-              
-              const showDateHeader = index === 0 || 
-                format(new Date(displayMessages[index - 1].timestamp), 'yyyy-MM-dd') !== 
-                format(new Date(msg.timestamp), 'yyyy-MM-dd');
+          ) : (
+            <>
+              {displayMessages.map((msg, index) => {
+                // Determine if this is the current user's message (sender)
+                // msg.sender might be populated object {_id, name...} or just an ID string
+                const senderId = typeof msg.sender === 'object' ? msg.sender?._id : msg.sender;
+                const isOwnMessage = String(senderId) === String(currentUser?._id);
+                const isSystemMessage = msg.senderRole === 'System';
 
-              return (
-                <React.Fragment key={msg._id || index}>
-                  {/* Date Header */}
-                  {showDateHeader && (
-                    <div className="flex items-center justify-center my-4 px-2 sm:px-4">
-                      <div className="bg-gray-200  px-3 py-1 sm:px-4 rounded-full">
-                        <span className="text-xs sm:text-sm font-medium text-muted-foreground ">
-                          {format(new Date(msg.timestamp), 'MMMM dd, yyyy')}
-                        </span>
+                // Debug logging - show first and last message
+                if (index === 0 || index === displayMessages.length - 1) {
+                  console.log(`� Message ${index}: "${msg.message?.substring(0, 40)}" | ID: ${msg._id} | Time: ${formatMessageTime(msg.timestamp)}`);
+                }
+
+                const showDateHeader = index === 0 ||
+                  format(new Date(displayMessages[index - 1].timestamp), 'yyyy-MM-dd') !==
+                  format(new Date(msg.timestamp), 'yyyy-MM-dd');
+
+                return (
+                  <React.Fragment key={msg._id || index}>
+                    {/* Date Header */}
+                    {showDateHeader && (
+                      <div className="flex items-center justify-center my-4 px-2 sm:px-4">
+                        <div className="bg-gray-200  px-3 py-1 sm:px-4 rounded-full">
+                          <span className="text-xs sm:text-sm font-medium text-muted-foreground ">
+                            {format(new Date(msg.timestamp), 'MMMM dd, yyyy')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* System Message */}
-                  {isSystemMessage ? (
-                    <div className="flex justify-center px-2 sm:px-4">
-                      <div className="bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-3 py-2 sm:px-4 sm:py-2 max-w-[85%] sm:max-w-md min-w-0">
-                        {(() => {
-                          // For internal roles (Agent/QA/TL/Admin), append escalation reason to transfer system messages
-                          let systemText = String(msg.message || '');
-                          if (!isCustomer && /(your\s+query\s+has\s+been\s+transferred|query\s+transferred|transferred\s+by)/i.test(systemText)) {
-                            const latest = Array.isArray(query?.transferHistory) && query.transferHistory.length
-                              ? query.transferHistory[query.transferHistory.length - 1]
-                              : null;
-                            const reason = latest?.reason?.trim();
-                            if (reason) {
-                              systemText = `${systemText}\nReason: ${reason}`;
+                    {/* System Message */}
+                    {isSystemMessage ? (
+                      <div className="flex justify-center px-2 sm:px-4">
+                        <div className="bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-3 py-2 sm:px-4 sm:py-2 max-w-[85%] sm:max-w-md min-w-0">
+                          {(() => {
+                            // For internal roles (Agent/QA/TL/Admin), append escalation reason to transfer system messages
+                            let systemText = String(msg.message || '');
+                            if (!isCustomer && /(your\s+query\s+has\s+been\s+transferred|query\s+transferred|transferred\s+by)/i.test(systemText)) {
+                              const latest = Array.isArray(query?.transferHistory) && query.transferHistory.length
+                                ? query.transferHistory[query.transferHistory.length - 1]
+                                : null;
+                              const reason = latest?.reason?.trim();
+                              if (reason) {
+                                systemText = `${systemText}\nReason: ${reason}`;
+                              }
                             }
-                          }
-                          return (
-                            <p className="text-sm sm:text-base text-yellow-800 dark:text-yellow-300 text-center break-words break-all sm:break-words whitespace-pre-wrap overflow-wrap-anywhere word-break-break-word">
-                              {systemText}
-                            </p>
-                          );
-                        })()}
+                            return (
+                              <p className="text-sm sm:text-base text-yellow-800 dark:text-yellow-300 text-center break-words break-all sm:break-words whitespace-pre-wrap overflow-wrap-anywhere word-break-break-word">
+                                {systemText}
+                              </p>
+                            );
+                          })()}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    /* Regular Message - Sent (right) vs Received (left) */
-                    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} px-2 sm:px-4`}>
-                      <div className={`flex gap-2 max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] min-w-0 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
-                        {/* Avatar - Only show for received messages (left side) */}
-                        {!isOwnMessage && (
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                            {msg.senderName?.[0] || '?'}
-                          </div>
-                        )}
-
-                        {/* Message Bubble */}
-                        <div>
-                          {/* Sender name - Only show for received messages */}
+                    ) : (
+                      /* Regular Message - Sent (right) vs Received (left) */
+                      <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} px-2 sm:px-4`}>
+                        <div className={`flex gap-2 max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] min-w-0 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+                          {/* Avatar - Only show for received messages (left side) */}
                           {!isOwnMessage && (
-                            <div className="text-xs sm:text-sm text-muted-foreground  mb-1 px-1">
-                              {msg.senderName} {msg.senderRole !== 'Customer' && `(${msg.senderRole})`}
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                              {msg.senderName?.[0] || '?'}
                             </div>
                           )}
-                          {/* Message content */}
-                          <div className={`rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 min-w-0 ${
-                            isOwnMessage
-                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'  // Sent messages (right)
-                              : 'bg-card  text-foreground border border-border '  // Received messages (left)
-                          }`}>
-                            {(() => {
-                              const text = String(msg.message || '');
-                              // Simple detect: messages that include an image URL (png/jpg/jpeg/gif) or start with camera prefix
-                              const urlMatch = text.match(/https?:[^\s]+\.(?:png|jpg|jpeg|gif|webp)/i);
-                              if (urlMatch) {
-                                const imgUrl = urlMatch[0];
-                                return (
-                                  <div className="space-y-2">
-                                    <p className="text-xs opacity-80">{text.replace(imgUrl, '').trim() || (isOwnMessage ? 'You shared a snapshot' : `${msg.senderName} shared a snapshot`)}</p>
-                                    <img src={imgUrl} alt="snapshot" className="rounded-lg max-h-64 object-contain border border-border " />
-                                  </div>
-                                );
-                              }
-                              return (
-                                <p className="text-sm sm:text-base break-words break-all sm:break-words whitespace-pre-wrap leading-relaxed overflow-wrap-anywhere word-break-break-word">{text}</p>
-                              );
-                            })()}
-                            {msg.timestamp && (
-                              (() => {
-                                const { abs, rel } = getAbsRel(msg.timestamp);
-                                return (
-                                  <div key={`time-${msg._id}`} className={`text-xs mt-1 ${
-                                    isOwnMessage ? 'text-blue-100' : 'text-muted-foreground '
-                                  }`}>
-                                    <div className="flex items-center gap-1 flex-wrap">
-                                      <span>{abs}</span>
-                                      {rel && (
-                                        <span className="px-1 py-0.5 rounded bg-black/10 dark:bg-card/10 text-[10px]" title={abs}>{rel}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })()
+
+                          {/* Message Bubble */}
+                          <div>
+                            {/* Sender name - Only show for received messages */}
+                            {!isOwnMessage && (
+                              <div className="text-xs sm:text-sm text-muted-foreground  mb-1 px-1">
+                                {msg.senderName} {msg.senderRole !== 'Customer' && `(${msg.senderRole})`}
+                              </div>
                             )}
+                            {/* Message content */}
+                            <div className={`rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 min-w-0 ${isOwnMessage
+                                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'  // Sent messages (right)
+                                : 'bg-card  text-foreground border border-border '  // Received messages (left)
+                              }`}>
+                              {(() => {
+                                const text = String(msg.message || '');
+                                // Simple detect: messages that include an image URL (png/jpg/jpeg/gif) or start with camera prefix
+                                const urlMatch = text.match(/https?:[^\s]+\.(?:png|jpg|jpeg|gif|webp)/i);
+                                if (urlMatch) {
+                                  const imgUrl = urlMatch[0];
+                                  return (
+                                    <div className="space-y-2">
+                                      <p className="text-xs opacity-80">{text.replace(imgUrl, '').trim() || (isOwnMessage ? 'You shared a snapshot' : `${msg.senderName} shared a snapshot`)}</p>
+                                      <img src={imgUrl} alt="snapshot" className="rounded-lg max-h-64 object-contain border border-border " />
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <p className="text-sm sm:text-base break-words break-all sm:break-words whitespace-pre-wrap leading-relaxed overflow-wrap-anywhere word-break-break-word">{text}</p>
+                                );
+                              })()}
+                              {msg.timestamp && (
+                                (() => {
+                                  const { abs, rel } = getAbsRel(msg.timestamp);
+                                  return (
+                                    <div key={`time-${msg._id}`} className={`text-xs mt-1 ${isOwnMessage ? 'text-blue-100' : 'text-muted-foreground '
+                                      }`}>
+                                      <div className="flex items-center gap-1 flex-wrap">
+                                        <span>{abs}</span>
+                                        {rel && (
+                                          <span className="px-1 py-0.5 rounded bg-black/10 dark:bg-card/10 text-[10px]" title={abs}>{rel}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })()
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
+                    )}
+                  </React.Fragment>
+                );
+              })}
 
-            {/* Typing Indicator */}
-            {typingUser && (
-              <div className="flex justify-start px-2 sm:px-4">
-                <div className="flex gap-2 max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] min-w-0">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
-                    {typingUser[0]}
-                  </div>
-                  <div className="bg-card  border border-border  rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 min-w-0">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              {/* Typing Indicator */}
+              {typingUser && (
+                <div className="flex justify-start px-2 sm:px-4">
+                  <div className="flex gap-2 max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] min-w-0">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                      {typingUser[0]}
+                    </div>
+                    <div className="bg-card  border border-border  rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 min-w-0">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div ref={messagesEndRef} />
-          </>
-        )}
-      </div>
+              <div ref={messagesEndRef} />
+            </>
+          )}
+        </div>
       )}
       {/* End Messages Container Conditional */}
 
@@ -1519,11 +1513,11 @@ export default function QueryChat() {
             <div className="flex items-center justify-center gap-3 py-4 px-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
               <AlertCircle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0" />
               <p className="text-red-700 dark:text-red-300 font-semibold">
-                {isWaitingForAssignment 
+                {isWaitingForAssignment
                   ? 'Waiting for query assignment. Please wait...'
                   : wasEscalatedByCurrentUser
-                  ? 'You cannot message after escalating this query'
-                  : 'You are not authorized to send messages in this query.'
+                    ? 'You cannot message after escalating this query'
+                    : 'You are not authorized to send messages in this query.'
                 }
               </p>
               {isWaitingForAssignment && (
@@ -1542,7 +1536,7 @@ export default function QueryChat() {
               >
                 <Paperclip size={20} className="text-muted-foreground " />
               </button> */}
-              
+
               <div className="flex-1 relative">
                 <textarea
                   ref={messageInputRef}
@@ -1558,8 +1552,8 @@ export default function QueryChat() {
                   placeholder="Type your message..."
                   rows={1}
                   className="w-full px-4 py-3 border-2 border-border dark:border-gray-600 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 bg-card  text-foreground resize-none overflow-hidden"
-                  style={{ 
-                    minHeight: '48px', 
+                  style={{
+                    minHeight: '48px',
                     maxHeight: '120px',
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
@@ -1673,7 +1667,7 @@ export default function QueryChat() {
       )}
 
       {/* Rate Query Modal */}
-  {showRateModal && isQATeam && (
+      {showRateModal && isQATeam && (
         <RateQueryModal
           petitionId={petitionId}
           readOnly={!canSetWeightage}
@@ -1693,9 +1687,8 @@ export default function QueryChat() {
       {isAgent && (
         <div
           ref={faqPanelRef}
-          className={`fixed top-0 right-0 h-screen bg-card  border-l border-border  shadow-2xl transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-            showFaqPanel ? 'translate-x-0' : 'translate-x-full'
-          }`}
+          className={`fixed top-0 right-0 h-screen bg-card  border-l border-border  shadow-2xl transition-transform duration-300 ease-in-out z-50 flex flex-col ${showFaqPanel ? 'translate-x-0' : 'translate-x-full'
+            }`}
           style={{ width: '630px', maxWidth: '95vw' }}
         >
           {/* FAQ Panel Header */}
@@ -1716,21 +1709,19 @@ export default function QueryChat() {
           <div className="flex border-b border-border ">
             <button
               onClick={() => setActiveSection('common')}
-              className={`flex-1 px-4 py-2 font-medium transition-colors ${
-                activeSection === 'common'
+              className={`flex-1 px-4 py-2 font-medium transition-colors ${activeSection === 'common'
                   ? 'bg-primary  text-white border-b-2 border-blue-700 dark:border-teal-600'
                   : isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-muted-foreground hover:bg-muted/50'
-              }`}
+                }`}
             >
               Common Replies
             </button>
             <button
               onClick={() => setActiveSection('faqs')}
-              className={`flex-1 px-4 py-2 font-medium transition-colors ${
-                activeSection === 'faqs'
+              className={`flex-1 px-4 py-2 font-medium transition-colors ${activeSection === 'faqs'
                   ? 'bg-primary  text-white border-b-2 border-blue-700 dark:border-teal-600'
                   : isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-muted-foreground hover:bg-muted/50'
-              }`}
+                }`}
             >
               FAQs
             </button>
@@ -1745,9 +1736,8 @@ export default function QueryChat() {
                 placeholder={activeSection === 'common' ? 'Search replies...' : 'Search FAQs...'}
                 value={activeSection === 'common' ? commonSearch : faqSearch}
                 onChange={(e) => activeSection === 'common' ? setCommonSearch(e.target.value) : setFaqSearch(e.target.value)}
-                className={`w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
-                }`}
+                className={`w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
+                  }`}
               />
             </div>
           </div>
@@ -1863,9 +1853,8 @@ export default function QueryChat() {
                   {filteredCommonReplies.map((reply) => (
                     <div
                       key={reply._id}
-                      className={`p-3 rounded-lg border ${
-                        isDark ? 'bg-gray-900 border-gray-700' : 'bg-muted/50 border-border'
-                      } hover:shadow-md transition-shadow`}
+                      className={`p-3 rounded-lg border ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-muted/50 border-border'
+                        } hover:shadow-md transition-shadow`}
                     >
                       {editingCommonId === reply._id ? (
                         <div>
@@ -1873,9 +1862,8 @@ export default function QueryChat() {
                             defaultValue={reply.text}
                             id={`cr-${reply._id}`}
                             rows={3}
-                            className={`w-full mb-2 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                              isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
-                            }`}
+                            className={`w-full mb-2 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
+                              }`}
                           />
                           <div className="flex gap-2">
                             <button
@@ -1890,9 +1878,8 @@ export default function QueryChat() {
                             </button>
                             <button
                               onClick={() => setEditingCommonId(null)}
-                              className={`flex-1 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
-                                isDark ? 'border-gray-700 text-gray-300 hover:bg-gray-700' : 'border-border text-gray-700 hover:bg-muted'
-                              }`}
+                              className={`flex-1 px-3 py-1.5 text-sm border rounded-lg transition-colors ${isDark ? 'border-gray-700 text-gray-300 hover:bg-gray-700' : 'border-border text-gray-700 hover:bg-muted'
+                                }`}
                             >
                               Cancel
                             </button>
@@ -1963,9 +1950,8 @@ export default function QueryChat() {
                   {filteredFaqs.map((faq) => (
                     <div
                       key={faq._id}
-                      className={`p-3 rounded-lg border ${
-                        isDark ? 'bg-gray-900 border-gray-700' : 'bg-muted/50 border-border'
-                      } hover:shadow-md transition-shadow`}
+                      className={`p-3 rounded-lg border ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-muted/50 border-border'
+                        } hover:shadow-md transition-shadow`}
                     >
                       {editingFaqId === faq._id ? (
                         <div>
@@ -1973,17 +1959,15 @@ export default function QueryChat() {
                             type="text"
                             defaultValue={faq.question}
                             id={`q-${faq._id}`}
-                            className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
-                            }`}
+                            className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
+                              }`}
                           />
                           <textarea
                             defaultValue={faq.answer}
                             id={`a-${faq._id}`}
                             rows={3}
-                            className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                              isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
-                            }`}
+                            className={`w-full mb-2 px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${isDark ? 'bg-gray-950 border-gray-700 text-white placeholder-gray-500' : 'bg-card border-border text-foreground'
+                              }`}
                           />
                           <div className="flex gap-2">
                             <button
@@ -1999,9 +1983,8 @@ export default function QueryChat() {
                             </button>
                             <button
                               onClick={() => setEditingFaqId(null)}
-                              className={`flex-1 px-3 py-1 text-sm border rounded-lg transition-colors ${
-                                isDark ? 'border-gray-700 text-gray-300 hover:bg-gray-700' : 'border-border text-gray-700 hover:bg-muted'
-                              }`}
+                              className={`flex-1 px-3 py-1 text-sm border rounded-lg transition-colors ${isDark ? 'border-gray-700 text-gray-300 hover:bg-gray-700' : 'border-border text-gray-700 hover:bg-muted'
+                                }`}
                             >
                               Cancel
                             </button>

@@ -19,6 +19,11 @@ import {
 import Select from "react-select";
 import { Country, State, City } from "country-state-city";
 import { format } from "date-fns";
+import {
+  useGetCustomerByIdQuery,
+  useGetCustomerQueryHistoryQuery,
+  useUpdateCustomerDetailsMutation
+} from "../../../features/customer/customerApi";
 
 export default function CustomerDetails() {
   const { customerId } = useParams();
@@ -30,12 +35,6 @@ export default function CustomerDetails() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info"); // 'info', 'queries', 'plans'
   const [queryHistory, setQueryHistory] = useState([]);
-  const [planHistory, setPlanHistory] = useState([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [editingPlanId, setEditingPlanId] = useState(null);
-  const [editPlanData, setEditPlanData] = useState(null);
-  const [showDeletePlanModal, setShowDeletePlanModal] = useState(false);
-  const [planToDelete, setPlanToDelete] = useState(null);
 
   // Address dropdowns
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -50,17 +49,7 @@ export default function CustomerDetails() {
     email: "",
     mobile: "",
     alternatePhone: "",
-    title: "",
-    nationality: "",
-    preferredLanguage: "",
-    frequentFlyerNumber: "",
     agentNotes: "",
-    governmentId: {
-      type: "",
-      number: "",
-      issuedDate: "",
-      expiryDate: "",
-    },
     address: {
       street: "",
       locality: "",
@@ -72,13 +61,6 @@ export default function CustomerDetails() {
       postalCode: "",
       landmark: "",
     },
-    planType: "",
-    billingType: "",
-    billingCycle: "",
-    validityPeriod: "",
-    activationDate: "",
-    deactivationDate: "",
-    serviceStatus: "Active",
   });
 
   // Get countries
@@ -89,12 +71,103 @@ export default function CustomerDetails() {
     isoCode: country.isoCode,
   }));
 
-  // Fetch customer data
+  // RTK Query Hooks
+  const {
+    data: customerResponse,
+    isLoading: isCustomerLoading,
+    refetch: refetchCustomer
+  } = useGetCustomerByIdQuery(customerId, { skip: !customerId });
+
+  const {
+    data: queryHistoryResponse,
+    isLoading: isQueryHistoryLoading,
+    refetch: refetchQueryHistory
+  } = useGetCustomerQueryHistoryQuery(customerId, { skip: !customerId || activeTab !== "queries" });
+
+  const [updateCustomerDetails] = useUpdateCustomerDetailsMutation();
+
+  // Load customer data when RTK Query data changes
   useEffect(() => {
-    if (customerId) {
-      fetchCustomerData();
+    if (customerResponse?.status && customerResponse?.data) {
+      const customer = customerResponse.data;
+      setCustomerData(customer);
+
+      setFormData({
+        customerId: customer.customerId || "",
+        name: customer.name || "",
+        email: customer.email || "",
+        mobile: customer.mobile || "",
+        alternatePhone: customer.alternatePhone || "",
+        agentNotes: customer.agentNotes || "",
+        address: {
+          street: customer.address?.street || "",
+          locality: customer.address?.locality || "",
+          city: customer.address?.city || "",
+          state: customer.address?.state || "",
+          country: customer.address?.country || "",
+          countryCode: customer.address?.countryCode || "",
+          stateCode: customer.address?.stateCode || "",
+          postalCode: customer.address?.postalCode || "",
+          landmark: customer.address?.landmark || "",
+        },
+      });
+
+      let foundCountry = null;
+      if (customer.address?.countryCode) {
+        foundCountry = countries.find((c) => c.isoCode === customer.address.countryCode);
+      } else if (customer.address?.country) {
+        foundCountry = countries.find((c) => c.name.toLowerCase() === customer.address.country.toLowerCase());
+      }
+
+      if (foundCountry) {
+        setSelectedCountry(foundCountry);
+        const countryStates = State.getStatesOfCountry(foundCountry.isoCode).map((state) => ({
+          value: state.isoCode,
+          label: state.name,
+          name: state.name,
+          isoCode: state.isoCode,
+          countryCode: state.countryCode,
+        }));
+        setStates(countryStates);
+
+        let foundState = null;
+        const statesList = State.getStatesOfCountry(foundCountry.isoCode);
+        if (customer.address?.stateCode) {
+          foundState = statesList.find((s) => s.isoCode === customer.address.stateCode);
+        } else if (customer.address?.state) {
+          foundState = statesList.find((s) => s.name.toLowerCase() === customer.address.state.toLowerCase());
+          if (!foundState) {
+            foundState = statesList.find((s) => s.name.toLowerCase().includes(customer.address.state.toLowerCase()) || customer.address.state.toLowerCase().includes(s.name.toLowerCase()));
+          }
+        }
+
+        if (foundState) {
+          setSelectedState({
+            value: foundState.isoCode,
+            label: foundState.name,
+            name: foundState.name,
+            isoCode: foundState.isoCode,
+            countryCode: foundState.countryCode,
+          });
+          const stateCities = City.getCitiesOfState(foundCountry.isoCode, foundState.isoCode).map((city) => ({
+            value: city.name,
+            label: city.name,
+            name: city.name,
+          }));
+          setCities(stateCities);
+        }
+      }
+
+      if (customer.address?.city) {
+        setSelectedCity({
+          value: customer.address.city,
+          label: customer.address.city,
+          name: customer.address.city,
+        });
+      }
     }
-  }, [customerId]);
+  }, [customerResponse]);
+
 
   // Update states when country changes (only clear if country is removed)
   useEffect(() => {
@@ -135,256 +208,33 @@ export default function CustomerDetails() {
     }
   }, [selectedState, selectedCountry]);
 
-  // Load query and plan history when tab changes
+
+
+  // Sync RTK Query history data
   useEffect(() => {
-    if (customerId) {
-      if (activeTab === "queries") {
-        fetchQueryHistory();
-      } else if (activeTab === "plans") {
-        fetchPlanHistory();
-      }
+    if (queryHistoryResponse?.status) {
+      setQueryHistory(queryHistoryResponse.data || []);
     }
-  }, [activeTab, customerId]);
+  }, [queryHistoryResponse]);
 
-  const fetchCustomerData = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/customer/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      const data = await response.json();
+  // Combined Loading state
+  useEffect(() => {
+    setLoading(isCustomerLoading);
+  }, [isCustomerLoading]);
 
-      if (data.status) {
-        const customer = data.data;
-        setCustomerData(customer);
 
-        setFormData({
-          customerId: customer.customerId || "",
-          name: customer.name || "",
-          email: customer.email || "",
-          mobile: customer.mobile || "",
-          alternatePhone: customer.alternatePhone || "",
-          title: customer.title || "",
-          nationality: customer.nationality || "",
-          preferredLanguage: customer.preferredLanguage || "",
-          frequentFlyerNumber: customer.frequentFlyerNumber || "",
-          agentNotes: customer.agentNotes || "",
-          governmentId: {
-            type: customer.governmentId?.type || "",
-            number: customer.governmentId?.number || "",
-            issuedDate: customer.governmentId?.issuedDate
-              ? customer.governmentId.issuedDate.split("T")[0]
-              : "",
-            expiryDate: customer.governmentId?.expiryDate
-              ? customer.governmentId.expiryDate.split("T")[0]
-              : "",
-          },
-          address: {
-            street: customer.address?.street || "",
-            locality: customer.address?.locality || "",
-            city: customer.address?.city || "",
-            state: customer.address?.state || "",
-            country: customer.address?.country || "",
-            countryCode: customer.address?.countryCode || "",
-            stateCode: customer.address?.stateCode || "",
-            postalCode: customer.address?.postalCode || "",
-            landmark: customer.address?.landmark || "",
-          },
-          planType: customer.planType || "",
-          billingType: customer.billingType || "",
-          billingCycle: customer.billingCycle || "",
-          validityPeriod: customer.validityPeriod || "",
-          activationDate: customer.activationDate
-            ? customer.activationDate.split("T")[0]
-            : "",
-          deactivationDate: customer.deactivationDate
-            ? customer.deactivationDate.split("T")[0]
-            : "",
-          serviceStatus: customer.serviceStatus || "Active",
-        });
-
-        // Set dropdowns
-        let foundCountry = null;
-        if (customer.address?.countryCode) {
-          foundCountry = countries.find(
-            (c) => c.isoCode === customer.address.countryCode
-          );
-        } else if (customer.address?.country) {
-          foundCountry = countries.find(
-            (c) =>
-              c.name.toLowerCase() === customer.address.country.toLowerCase()
-          );
-        }
-
-        if (foundCountry) {
-          setSelectedCountry(foundCountry);
-
-          const countryStates = State.getStatesOfCountry(
-            foundCountry.isoCode
-          ).map((state) => ({
-            value: state.isoCode,
-            label: state.name,
-            name: state.name,
-            isoCode: state.isoCode,
-            countryCode: state.countryCode,
-          }));
-          setStates(countryStates);
-        }
-
-        // Set state dropdown
-        if (foundCountry) {
-          let foundState = null;
-          const countryCode = foundCountry.isoCode;
-          const statesList = State.getStatesOfCountry(countryCode);
-
-          if (customer.address?.stateCode) {
-            foundState = statesList.find(
-              (s) => s.isoCode === customer.address.stateCode
-            );
-          } else if (customer.address?.state) {
-            foundState = statesList.find(
-              (s) =>
-                s.name.toLowerCase() === customer.address.state.toLowerCase()
-            );
-
-            if (!foundState) {
-              foundState = statesList.find(
-                (s) =>
-                  s.name
-                    .toLowerCase()
-                    .includes(customer.address.state.toLowerCase()) ||
-                  customer.address.state
-                    .toLowerCase()
-                    .includes(s.name.toLowerCase())
-              );
-            }
-          }
-
-          if (foundState) {
-            const stateObj = {
-              value: foundState.isoCode,
-              label: foundState.name,
-              name: foundState.name,
-              isoCode: foundState.isoCode,
-              countryCode: foundState.countryCode,
-            };
-            setSelectedState(stateObj);
-
-            const stateCities = City.getCitiesOfState(
-              countryCode,
-              foundState.isoCode
-            ).map((city) => ({
-              value: city.name,
-              label: city.name,
-              name: city.name,
-            }));
-            setCities(stateCities);
-          }
-        }
-
-        if (customer.address?.city) {
-          setSelectedCity({
-            value: customer.address.city,
-            label: customer.address.city,
-            name: customer.address.city,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load customer:", error);
-      toast.error("Failed to load customer data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchQueryHistory = async () => {
-    setIsLoadingHistory(true);
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL
-        }/api/v1/customer/${customerId}/query-history`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      const data = await response.json();
-      if (data.status) {
-        setQueryHistory(data.data || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch query history:", error);
-      toast.error("Failed to load query history");
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  const fetchPlanHistory = async () => {
-    setIsLoadingHistory(true);
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL
-        }/api/v1/customer/${customerId}/plan-history`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      const data = await response.json();
-      if (data.status) {
-        setPlanHistory(data.data || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch plan history:", error);
-      toast.error("Failed to load plan history");
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Clean formData - remove empty governmentId
       const cleanedData = { ...formData };
-      if (!cleanedData.governmentId?.type || cleanedData.governmentId.type.trim() === '') {
-        cleanedData.governmentId = null;
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/customer/${customerId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(cleanedData),
-        }
-      );
-
-      const data = await response.json();
-      if (data.status) {
-        toast.success("Customer updated successfully");
-        setIsEditMode(false);
-        fetchCustomerData();
-      } else {
-        toast.error(data.message || "Failed to update customer");
-      }
+      await updateCustomerDetails({ id: customerId, data: cleanedData }).unwrap();
+      toast.success("Customer updated successfully");
+      setIsEditMode(false);
+      refetchCustomer();
     } catch (error) {
       console.error("Failed to update customer:", error);
-      toast.error("Failed to update customer");
+      toast.error(error.data?.message || "Failed to update customer");
     } finally {
       setIsSaving(false);
     }
@@ -445,95 +295,7 @@ export default function CustomerDetails() {
     }));
   };
 
-  const handleEditPlan = (plan) => {
-    setEditingPlanId(plan._id);
-    setEditPlanData({
-      planType: plan.planType,
-      billingType: plan.billingType,
-      billingCycle: plan.billingCycle,
-      validityPeriod: plan.validityPeriod,
-      activationDate: plan.activationDate
-        ? new Date(plan.activationDate).toISOString().split("T")[0]
-        : "",
-      deactivationDate: plan.deactivationDate
-        ? new Date(plan.deactivationDate).toISOString().split("T")[0]
-        : "",
-      serviceStatus: plan.serviceStatus,
-      notes: plan.notes || "",
-    });
-  };
 
-  const handleUpdatePlan = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL
-        }/api/v1/customer/${customerId}/plan/${editingPlanId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(editPlanData),
-        }
-      );
-      const data = await response.json();
-      if (data.status) {
-        toast.success("Plan updated successfully");
-        setEditingPlanId(null);
-        setEditPlanData(null);
-        fetchPlanHistory();
-      } else {
-        toast.error(data.message || "Failed to update plan");
-      }
-    } catch (error) {
-      toast.error("Failed to update plan");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDeletePlan = (planId) => {
-    setPlanToDelete(planId);
-    setShowDeletePlanModal(true);
-  };
-
-  const confirmDeletePlan = async () => {
-    if (!planToDelete) return;
-
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL
-        }/api/v1/customer/${customerId}/plan/${planToDelete}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      const data = await response.json();
-      if (data.status) {
-        toast.success("Plan deleted successfully");
-        fetchPlanHistory();
-      } else {
-        toast.error(data.message || "Failed to delete plan");
-      }
-    } catch (error) {
-      toast.error("Failed to delete plan");
-    } finally {
-      setShowDeletePlanModal(false);
-      setPlanToDelete(null);
-    }
-  };
-
-  const handleEditPlanChange = (e) => {
-    const { name, value } = e.target;
-    setEditPlanData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -591,8 +353,8 @@ export default function CustomerDetails() {
       borderColor: state.isFocused
         ? "#0d9488"
         : document.documentElement.classList.contains("dark")
-        ? "#4b5563"
-        : "#d1d5db",
+          ? "#4b5563"
+          : "#d1d5db",
       color: document.documentElement.classList.contains("dark")
         ? "#ffffff"
         : "#111827",
@@ -605,11 +367,10 @@ export default function CustomerDetails() {
       backgroundColor: document.documentElement.classList.contains("dark")
         ? "#374151"
         : "#ffffff",
-      border: `1px solid ${
-        document.documentElement.classList.contains("dark")
-          ? "#4b5563"
-          : "#d1d5db"
-      }`,
+      border: `1px solid ${document.documentElement.classList.contains("dark")
+        ? "#4b5563"
+        : "#d1d5db"
+        }`,
       zIndex: 9999,
     }),
     option: (base, state) => ({
@@ -617,15 +378,15 @@ export default function CustomerDetails() {
       backgroundColor: state.isSelected
         ? "#0d9488"
         : state.isFocused
-        ? document.documentElement.classList.contains("dark")
-          ? "#4b5563"
-          : "#f3f4f6"
-        : "transparent",
+          ? document.documentElement.classList.contains("dark")
+            ? "#4b5563"
+            : "#f3f4f6"
+          : "transparent",
       color: state.isSelected
         ? "white"
         : document.documentElement.classList.contains("dark")
-        ? "#ffffff"
-        : "#111827",
+          ? "#ffffff"
+          : "#111827",
       cursor: "pointer",
       "&:active": { backgroundColor: "#0f766e" },
     }),
@@ -724,7 +485,6 @@ export default function CustomerDetails() {
                   <button
                     onClick={() => {
                       setIsEditMode(false);
-                      fetchCustomerData();
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-gray-200  text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
@@ -760,36 +520,24 @@ export default function CustomerDetails() {
           <nav className="flex gap-8">
             <button
               onClick={() => setActiveTab("info")}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "info"
-                  ? "border-teal-600 bg-primary"
-                  : "border-transparent text-muted-foreground hover:text-gray-700  dark:hover:text-gray-300"
-              }`}
+              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === "info"
+                ? "border-teal-600 bg-primary"
+                : "border-transparent text-muted-foreground hover:text-gray-700  dark:hover:text-gray-300"
+                }`}
             >
               Customer Info
             </button>
             <button
               onClick={() => setActiveTab("queries")}
-              className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "queries"
-                  ? "border-teal-600 bg-primary"
-                  : "border-transparent text-muted-foreground hover:text-gray-700  dark:hover:text-gray-300"
-              }`}
+              className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === "queries"
+                ? "border-teal-600 bg-primary"
+                : "border-transparent text-muted-foreground hover:text-gray-700  dark:hover:text-gray-300"
+                }`}
             >
               <History size={16} />
               Query History
             </button>
-            <button
-              onClick={() => setActiveTab("plans")}
-              className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "plans"
-                  ? "border-teal-600 bg-primary"
-                  : "border-transparent text-muted-foreground hover:text-gray-700  dark:hover:text-gray-300"
-              }`}
-            >
-              <Package size={16} />
-              Plan History
-            </button>
+
           </nav>
         </div>
       </div>
@@ -857,158 +605,19 @@ export default function CustomerDetails() {
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Airline-Specific Information */}
-            <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Airline Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Title
-                  </label>
-                  <select
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select Title</option>
-                    <option value="Mr">Mr</option>
-                    <option value="Mrs">Mrs</option>
-                    <option value="Ms">Ms</option>
-                    <option value="Dr">Dr</option>
-                    <option value="Prof">Prof</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Nationality
-                  </label>
-                  <input
-                    type="text"
-                    name="nationality"
-                    value={formData.nationality}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    placeholder="e.g., Indian, American"
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Preferred Language
-                  </label>
-                  <input
-                    type="text"
-                    name="preferredLanguage"
-                    value={formData.preferredLanguage}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    placeholder="e.g., English, Hindi"
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Frequent Flyer Number
-                  </label>
-                  <input
-                    type="text"
-                    name="frequentFlyerNumber"
-                    value={formData.frequentFlyerNumber}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    placeholder="FFN-XXXXXX"
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Agent Notes
-                  </label>
-                  <textarea
-                    name="agentNotes"
-                    value={formData.agentNotes}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    rows="3"
-                    placeholder="Internal notes for agents only..."
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed resize-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Government ID */}
-            <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Government ID
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    ID Type
-                  </label>
-                  <select
-                    name="governmentId.type"
-                    value={formData.governmentId.type}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select ID Type</option>
-                    <option value="Aadhaar">Aadhaar</option>
-                    <option value="PAN">PAN</option>
-                    <option value="Passport">Passport</option>
-                    <option value="Driving License">Driving License</option>
-                    <option value="Voter ID">Voter ID</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    ID Number
-                  </label>
-                  <input
-                    type="text"
-                    name="governmentId.number"
-                    value={formData.governmentId.number}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Issue Date
-                  </label>
-                  <input
-                    type="date"
-                    name="governmentId.issuedDate"
-                    value={formData.governmentId.issuedDate}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Expiry Date
-                  </label>
-                  <input
-                    type="date"
-                    name="governmentId.expiryDate"
-                    value={formData.governmentId.expiryDate}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Agent Notes
+                </label>
+                <textarea
+                  name="agentNotes"
+                  value={formData.agentNotes}
+                  onChange={handleChange}
+                  disabled={!isEditMode}
+                  rows="3"
+                  placeholder="Internal notes for agents only..."
+                  className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed resize-none"
+                />
               </div>
             </div>
 
@@ -1115,116 +724,7 @@ export default function CustomerDetails() {
               </div>
             </div>
 
-            {/* Plan Information */}
-            <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Current Plan
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Plan Type
-                  </label>
-                  <input
-                    type="text"
-                    name="planType"
-                    value={formData.planType}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Billing Type
-                  </label>
-                  <select
-                    name="billingType"
-                    value={formData.billingType}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select</option>
-                    <option value="Prepaid">Prepaid</option>
-                    <option value="Postpaid">Postpaid</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Billing Cycle
-                  </label>
-                  <select
-                    name="billingCycle"
-                    value={formData.billingCycle}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Quarterly">Quarterly</option>
-                    <option value="Half Yearly">Half Yearly</option>
-                    <option value="Yearly">Yearly</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Validity (days)
-                  </label>
-                  <input
-                    type="number"
-                    name="validityPeriod"
-                    value={formData.validityPeriod}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Activation Date
-                  </label>
-                  <input
-                    type="date"
-                    name="activationDate"
-                    value={formData.activationDate}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Deactivation Date
-                  </label>
-                  <input
-                    type="date"
-                    name="deactivationDate"
-                    value={formData.deactivationDate}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Service Status
-                  </label>
-                  <select
-                    name="serviceStatus"
-                    value={formData.serviceStatus}
-                    onChange={handleChange}
-                    disabled={!isEditMode}
-                    className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground disabled:bg-muted dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Suspended">Suspended</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+
           </div>
         )}
 
@@ -1233,7 +733,7 @@ export default function CustomerDetails() {
             <h2 className="text-lg font-semibold text-foreground mb-4">
               Query History
             </h2>
-            {isLoadingHistory ? (
+            {isQueryHistoryLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
               </div>
@@ -1298,225 +798,7 @@ export default function CustomerDetails() {
           </div>
         )}
 
-        {activeTab === "plans" && (
-          <div className="bg-card  rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">
-              Plan History
-            </h2>
-            {isLoadingHistory ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
-              </div>
-            ) : planHistory.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground ">
-                No plan history found
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {planHistory.map((plan) => {
-                  const badge = getStatusBadge(plan.serviceStatus);
-                  const isEditing = editingPlanId === plan._id;
-
-                  return (
-                    <div
-                      key={plan._id}
-                      className="p-4 border border-border  rounded-lg"
-                    >
-                      {isEditing ? (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Plan Type
-                              </label>
-                              <input
-                                type="text"
-                                name="planType"
-                                value={editPlanData.planType}
-                                onChange={handleEditPlanChange}
-                                className="w-full px-3 py-1.5 text-sm border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Service Status
-                              </label>
-                              <select
-                                name="serviceStatus"
-                                value={editPlanData.serviceStatus}
-                                onChange={handleEditPlanChange}
-                                className="w-full px-3 py-1.5 text-sm border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground"
-                              >
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                                <option value="Suspended">Suspended</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Activation Date
-                              </label>
-                              <input
-                                type="date"
-                                name="activationDate"
-                                value={editPlanData.activationDate}
-                                onChange={handleEditPlanChange}
-                                className="w-full px-3 py-1.5 text-sm border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Deactivation Date
-                              </label>
-                              <input
-                                type="date"
-                                name="deactivationDate"
-                                value={editPlanData.deactivationDate}
-                                onChange={handleEditPlanChange}
-                                className="w-full px-3 py-1.5 text-sm border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground"
-                              />
-                            </div>
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Notes
-                              </label>
-                              <textarea
-                                name="notes"
-                                value={editPlanData.notes}
-                                onChange={handleEditPlanChange}
-                                rows="2"
-                                className="w-full px-3 py-1.5 text-sm border border-border dark:border-gray-600 rounded-lg bg-card  text-foreground"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={handleUpdatePlan}
-                              disabled={isSaving}
-                              className="px-3 py-1.5 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
-                            >
-                              {isSaving ? "Saving..." : "Save"}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingPlanId(null);
-                                setEditPlanData(null);
-                              }}
-                              className="px-3 py-1.5 text-sm bg-gray-200  text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}
-                              >
-                                {badge.icon}
-                                {plan.serviceStatus}
-                              </span>
-                              <span className="text-sm font-medium text-foreground">
-                                {plan.planType}
-                              </span>
-                            </div>
-                            <div className="text-sm text-muted-foreground  space-y-1">
-                              <p>
-                                <strong>Billing:</strong> {plan.billingType} -{" "}
-                                {plan.billingCycle}
-                              </p>
-                              <p>
-                                <strong>Validity:</strong> {plan.validityPeriod}{" "}
-                                days
-                              </p>
-                              <p>
-                                <strong>Active:</strong>{" "}
-                                {format(
-                                  new Date(plan.activationDate),
-                                  "MMM dd, yyyy"
-                                )}{" "}
-                                to{" "}
-                                {plan.deactivationDate
-                                  ? format(
-                                      new Date(plan.deactivationDate),
-                                      "MMM dd, yyyy"
-                                    )
-                                  : "N/A"}
-                              </p>
-                              {plan.notes && (
-                                <p>
-                                  <strong>Notes:</strong> {plan.notes}
-                                </p>
-                              )}
-                              <p className="text-xs text-muted-foreground">
-                                Added:{" "}
-                                {format(
-                                  new Date(plan.addedAt),
-                                  "MMM dd, yyyy hh:mm a"
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditPlan(plan)}
-                              className="p-2 bg-primary hover:bg-primary/5 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
-                              title="Edit plan"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeletePlan(plan._id)}
-                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Delete plan"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
       </div>
-
-      {/* Delete Plan Confirmation Modal */}
-      {showDeletePlanModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-slate-950 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border border-border ">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Delete Plan
-            </h3>
-            <p className="text-muted-foreground dark:text-gray-300 mb-6">
-              Are you sure you want to delete this plan? This action cannot be
-              undone.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setShowDeletePlanModal(false);
-                  setPlanToDelete(null);
-                }}
-                className="px-4 py-2 bg-gray-200  text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeletePlan}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

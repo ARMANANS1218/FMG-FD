@@ -1,12 +1,12 @@
 import { io } from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
 
 let ticketSocket = null;
 
 export function getTicketSocket() {
   if (ticketSocket && ticketSocket.connected) return ticketSocket;
-  
+
   const token = localStorage.getItem('token');
   ticketSocket = io(`${API_URL}/ticket`, {
     path: '/socket.io',

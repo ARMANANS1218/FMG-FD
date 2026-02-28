@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import ColorModeContext from '../../context/ColorModeContext';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 const OrganizationIpConfig = () => {
   const { mode } = useContext(ColorModeContext);
@@ -27,7 +27,7 @@ const OrganizationIpConfig = () => {
       const response = await axios.get(`${API_BASE}/api/v1/organization-ip-config`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       setConfig(response.data.data);
     } catch (error) {
       console.error('Error fetching organization IP config:', error);
@@ -98,35 +98,35 @@ const OrganizationIpConfig = () => {
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
     const cleanedIps = [];
     const seenIps = new Set();
-    
+
     for (const item of validIps) {
       const cleanIp = item.ip.split('/')[0].trim();
-      
+
       if (seenIps.has(cleanIp)) continue;
       seenIps.add(cleanIp);
-      
+
       if (!ipRegex.test(cleanIp)) {
         toast.error(`Invalid IP address format: ${item.ip}`);
         return;
       }
-      
+
       const parts = cleanIp.split('.');
       const invalidPart = parts.find(part => {
         const num = parseInt(part, 10);
         return isNaN(num) || num < 0 || num > 255;
       });
-      
+
       if (invalidPart !== undefined) {
         toast.error(`Invalid IP address: ${cleanIp}`);
         return;
       }
-      
+
       cleanedIps.push({
         ip: cleanIp,
         description: item.description || 'Organization IP'
       });
     }
-    
+
     if (cleanedIps.length === 0) {
       toast.error('No valid IP addresses found after removing duplicates');
       return;
@@ -172,14 +172,14 @@ const OrganizationIpConfig = () => {
       );
 
       console.log('Toggle response:', response.data);
-      
+
       // Update local state immediately
       if (response.data.data) {
         setConfig(response.data.data);
       }
-      
+
       toast.success(response.data.message);
-      
+
       // Fetch again to ensure sync
       await fetchConfig();
     } catch (error) {
@@ -266,26 +266,24 @@ const OrganizationIpConfig = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleToggleStatus}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  config.isActive
-                    ? darkMode 
-                      ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${config.isActive
+                    ? darkMode
+                      ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50'
                       : 'bg-green-100 bg-primary hover:bg-green-200'
                     : darkMode
                       ? 'bg-input text-muted-foreground hover:bg-muted'
                       : 'bg-muted text-foreground hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 {config.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                 {config.isActive ? 'Active' : 'Inactive'}
               </button>
               <button
                 onClick={handleDeleteConfiguration}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  darkMode 
-                    ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${darkMode
+                    ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50'
                     : 'bg-red-100 text-red-700 hover:bg-red-200'
-                }`}
+                  }`}
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -318,11 +316,10 @@ const OrganizationIpConfig = () => {
               {config.applyToRoles.map((role, index) => (
                 <span
                   key={index}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    darkMode 
-                      ? 'bg-blue-900/30 text-primary' 
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${darkMode
+                      ? 'bg-blue-900/30 text-primary'
                       : 'bg-blue-100 bg-primary'
-                  }`}
+                    }`}
                 >
                   {role}
                 </span>
@@ -353,11 +350,10 @@ const OrganizationIpConfig = () => {
           </p>
           <button
             onClick={handleOpenModal}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-              darkMode 
-                ? 'bg-blue-700 hover:bg-blue-800 text-foreground' 
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${darkMode
+                ? 'bg-blue-700 hover:bg-blue-800 text-foreground'
                 : 'bg-primary hover:bg-primary/90 text-foreground'
-            }`}
+              }`}
           >
             <Plus className="w-5 h-5" />
             Create IP Configuration
@@ -396,31 +392,28 @@ const OrganizationIpConfig = () => {
                       placeholder="e.g., 122.185.245.96"
                       value={ipItem.ip}
                       onChange={(e) => handleIpChange(index, 'ip', e.target.value)}
-                      className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        darkMode 
-                          ? 'bg-input border-border text-foreground placeholder-gray-400' 
+                      className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode
+                          ? 'bg-input border-border text-foreground placeholder-gray-400'
                           : 'bg-card border-border text-foreground'
-                      }`}
+                        }`}
                     />
                     <input
                       type="text"
                       placeholder="Description (optional)"
                       value={ipItem.description}
                       onChange={(e) => handleIpChange(index, 'description', e.target.value)}
-                      className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        darkMode 
-                          ? 'bg-input border-border text-foreground placeholder-gray-400' 
+                      className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode
+                          ? 'bg-input border-border text-foreground placeholder-gray-400'
                           : 'bg-card border-border text-foreground'
-                      }`}
+                        }`}
                     />
                     {ipAddresses.length > 1 && (
                       <button
                         onClick={() => handleRemoveIpField(index)}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          darkMode 
-                            ? 'text-red-400 hover:bg-red-900/30' 
+                        className={`px-3 py-2 rounded-lg transition-colors ${darkMode
+                            ? 'text-red-400 hover:bg-red-900/30'
                             : 'text-red-600 hover:bg-red-50'
-                        }`}
+                          }`}
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -429,11 +422,10 @@ const OrganizationIpConfig = () => {
                 ))}
                 <button
                   onClick={handleAddIpField}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    darkMode 
-                      ? 'text-primary hover:bg-blue-900/30' 
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${darkMode
+                      ? 'text-primary hover:bg-blue-900/30'
                       : 'text-foreground hover:bg-card'
-                  }`}
+                    }`}
                 >
                   <Plus className="w-4 h-4" />
                   Add Another IP
@@ -479,21 +471,19 @@ const OrganizationIpConfig = () => {
             <div className={`p-6 border-t flex justify-end gap-3 ${darkMode ? 'border-border' : 'border-border'}`}>
               <button
                 onClick={handleCloseModal}
-                className={`px-6 py-2 rounded-lg transition-colors ${
-                  darkMode 
-                    ? 'text-muted-foreground hover:bg-input' 
+                className={`px-6 py-2 rounded-lg transition-colors ${darkMode
+                    ? 'text-muted-foreground hover:bg-input'
                     : 'text-foreground hover:bg-muted'
-                }`}
+                  }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveConfiguration}
-                className={`px-6 py-2 text-foreground rounded-lg transition-colors ${
-                  darkMode 
-                    ? 'bg-blue-700 hover:bg-blue-800' 
+                className={`px-6 py-2 text-foreground rounded-lg transition-colors ${darkMode
+                    ? 'bg-blue-700 hover:bg-blue-800'
                     : 'bg-primary hover:bg-primary/90'
-                }`}
+                  }`}
               >
                 Save Configuration
               </button>

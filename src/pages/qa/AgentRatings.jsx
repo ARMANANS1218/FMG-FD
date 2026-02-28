@@ -45,7 +45,7 @@ export default function AgentRatings() {
   const [reportPeriod, setReportPeriod] = React.useState('');
   const [expandedAgentId, setExpandedAgentId] = React.useState(null);
   const [expandedTicketAgentId, setExpandedTicketAgentId] = React.useState(null);
-  
+
   // Chat weightage queries
   const { data, isLoading, refetch } = useListAggregatesQuery({
     from: from || undefined,
@@ -56,7 +56,7 @@ export default function AgentRatings() {
   const [xlsxFilename, setXlsxFilename] = React.useState('query_evaluations.xlsx');
   const [triggerXlsx, { data: xlsxBlob, isFetching: isDownloadingXlsx }] = useLazyExportXlsxQuery();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-  
+
   // Ticket weightage queries
   const { data: ticketData, isLoading: ticketLoading, refetch: ticketRefetch } = useListTicketAggregatesQuery({ from: from || undefined, to: to || undefined, evaluatorRole: evaluatorRole || undefined });
   const [selectedTicketAgentXlsx, setSelectedTicketAgentXlsx] = React.useState(null);
@@ -152,7 +152,7 @@ export default function AgentRatings() {
       }
 
       // Fetch evaluations for this agent
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6010';
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/api/v1/qa/list?agentId=${agentId}`, {
         headers: {
@@ -185,8 +185,8 @@ export default function AgentRatings() {
       const avgScore =
         evaluations.length > 0
           ? (
-              evaluations.reduce((sum, ev) => sum + ev.totalWeightedScore, 0) / evaluations.length
-            ).toFixed(2)
+            evaluations.reduce((sum, ev) => sum + ev.totalWeightedScore, 0) / evaluations.length
+          ).toFixed(2)
           : 0;
       const highestScore =
         evaluations.length > 0
@@ -196,79 +196,61 @@ export default function AgentRatings() {
         avgScore >= 81
           ? 'Excellent'
           : avgScore >= 61
-          ? 'Good'
-          : avgScore >= 41
-          ? 'Average'
-          : avgScore >= 21
-          ? 'Poor'
-          : 'Very Poor';
+            ? 'Good'
+            : avgScore >= 41
+              ? 'Average'
+              : avgScore >= 21
+                ? 'Poor'
+                : 'Very Poor';
 
       const evaluationRows = evaluations
         .map(
           (ev) => `
-      <tr style="background: ${
-        evaluations.indexOf(ev) % 2 === 0 ? '#F9FAFB' : '#FFFFFF'
-      }; border-bottom: 1px solid #E5E7EB;">
-        <td style="padding: 2px; color: #374151; white-space: nowrap; font-size: 7px;">${
-          ev.petitionId || 'N/A'
-        }</td>
+      <tr style="background: ${evaluations.indexOf(ev) % 2 === 0 ? '#F9FAFB' : '#FFFFFF'
+            }; border-bottom: 1px solid #E5E7EB;">
+        <td style="padding: 2px; color: #374151; white-space: nowrap; font-size: 7px;">${ev.petitionId || 'N/A'
+            }</td>
         <td style="padding: 2px; color: #374151; white-space: nowrap; font-size: 7px;">${capitalizeText(
-          ev.evaluatedBy?.name || ev.evaluator?.name || ev.evaluatorName || 'N/A'
-        )}</td>
-        <td style="padding: 2px; color: #374151; white-space: nowrap; font-size: 7px;">${
-          ev.createdAt ? format(new Date(ev.createdAt), 'dd MMM yyyy') : 'N/A'
-        }</td>
+              ev.evaluatedBy?.name || ev.evaluator?.name || ev.evaluatorName || 'N/A'
+            )}</td>
+        <td style="padding: 2px; color: #374151; white-space: nowrap; font-size: 7px;">${ev.createdAt ? format(new Date(ev.createdAt), 'dd MMM yyyy') : 'N/A'
+            }</td>
         <td style="padding: 2px; font-weight: bold; color: #1F2937; text-align: center; white-space: nowrap; font-size: 7px;">${ev.totalWeightedScore?.toFixed(
-          2
-        )}%</td>
+              2
+            )}%</td>
         <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${capitalizeText(
-          ev.performanceCategory || ev.result || 'N/A'
-        )}</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.greeting?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.probing?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.accuracy?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.resolution?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.processAdherence?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.compliance?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.grammar?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.tone?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.personalization?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.flow?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.toolEfficiency?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.escalation?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${
-          ev.documentation?.score || 0
-        }%</td>
-        <td style="padding: 2px; color: #374151; font-size: 6px; max-width: 80px; overflow: hidden; text-overflow: ellipsis;">${
-          ev.remarks || '-'
-        }</td>
-        <td style="padding: 2px; color: #374151; font-size: 6px; max-width: 80px; overflow: hidden; text-overflow: ellipsis;">${
-          ev.coachingArea || '-'
-        }</td>
+              ev.performanceCategory || ev.result || 'N/A'
+            )}</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.greeting?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.probing?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.accuracy?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.resolution?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.processAdherence?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.compliance?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.grammar?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.tone?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.personalization?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.flow?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.toolEfficiency?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.escalation?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; text-align: center; white-space: nowrap; font-size: 7px;">${ev.documentation?.score || 0
+            }%</td>
+        <td style="padding: 2px; color: #374151; font-size: 6px; max-width: 80px; overflow: hidden; text-overflow: ellipsis;">${ev.remarks || '-'
+            }</td>
+        <td style="padding: 2px; color: #374151; font-size: 6px; max-width: 80px; overflow: hidden; text-overflow: ellipsis;">${ev.coachingArea || '-'
+            }</td>
       </tr>
     `
         )
@@ -281,8 +263,8 @@ export default function AgentRatings() {
         <div style="text-align: center; margin-bottom: 40px; border-bottom: 4px solid #4F46E5; padding-bottom: 25px;">
           <h1 style="color: #4F46E5; margin: 0; font-size: 36px; text-transform: uppercase; letter-spacing: 1px;">Agent Performance Report</h1>
           <p style="margin: 15px 0 0 0; color: #666; font-size: 16px;">Comprehensive Evaluation Summary - ${capitalizeText(
-            reportPeriod
-          )} Report</p>
+        reportPeriod
+      )} Report</p>
         </div>
 
         <!-- Agent Information -->
@@ -292,21 +274,20 @@ export default function AgentRatings() {
             <tr>
               <td style="padding: 14px 0; font-weight: bold; color: #374151; text-transform: uppercase; font-size: 14px; width: 35%;">Agent Name:</td>
               <td style="padding: 14px 0; color: #1F2937; font-size: 16px; font-weight: 600;">${capitalizeText(
-                agentName
-              )}</td>
+        agentName
+      )}</td>
             </tr>
             <tr>
               <td style="padding: 14px 0; font-weight: bold; color: #374151; text-transform: uppercase; font-size: 14px;">Report Period:</td>
-              <td style="padding: 14px 0; color: #1F2937; font-size: 16px; font-weight: 600;">${
-                reportPeriod ? capitalizeText(reportPeriod) : 'All Time'
-              }</td>
+              <td style="padding: 14px 0; color: #1F2937; font-size: 16px; font-weight: 600;">${reportPeriod ? capitalizeText(reportPeriod) : 'All Time'
+        }</td>
             </tr>
             <tr>
               <td style="padding: 14px 0; font-weight: bold; color: #374151; text-transform: uppercase; font-size: 14px;">Generated On:</td>
               <td style="padding: 14px 0; color: #1F2937; font-size: 16px; font-weight: 600;">${format(
-                new Date(),
-                'dd MMM yyyy, hh:mm a'
-              )}</td>
+          new Date(),
+          'dd MMM yyyy, hh:mm a'
+        )}</td>
             </tr>
           </table>
         </div>
@@ -317,9 +298,8 @@ export default function AgentRatings() {
           <div style="display: flex; justify-content: space-around; margin-top: 25px; gap: 15px;">
             <div style="text-align: center; background: #EEF2FF; padding: 30px; border-radius: 10px; flex: 1; border-top: 4px solid #4F46E5;">
               <p style="margin: 0; color: #6B7280; font-size: 13px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Total Evaluations</p>
-              <p style="margin: 15px 0 0 0; color: #4F46E5; font-size: 42px; font-weight: bold;">${
-                evaluations.length
-              }</p>
+              <p style="margin: 15px 0 0 0; color: #4F46E5; font-size: 42px; font-weight: bold;">${evaluations.length
+        }</p>
             </div>
             <div style="text-align: center; background: #F0FDF4; padding: 30px; border-radius: 10px; flex: 1; border-top: 4px solid #059669;">
               <p style="margin: 0; color: #6B7280; font-size: 13px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Average Score</p>
@@ -332,8 +312,8 @@ export default function AgentRatings() {
             <div style="text-align: center; background: #DBEAFE; padding: 30px; border-radius: 10px; flex: 1; border-top: 4px solid #1E40AF;">
               <p style="margin: 0; color: #6B7280; font-size: 13px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Performance</p>
               <p style="margin: 15px 0 0 0; color: #1E40AF; font-size: 26px; font-weight: bold; text-transform: capitalize;">${capitalizeText(
-                performanceCategory
-              )}</p>
+          performanceCategory
+        )}</p>
             </div>
           </div>
         </div>
@@ -341,9 +321,9 @@ export default function AgentRatings() {
         <!-- Footer -->
         <div style="margin-top: 100px; padding-top: 25px; border-top: 3px solid #E5E7EB; text-align: center; color: #6B7280; font-size: 13px;">
           <p style="margin: 0; font-weight: 500;">Report Generated: ${format(
-            new Date(),
-            'dd MMM yyyy, hh:mm a'
-          )}</p>
+          new Date(),
+          'dd MMM yyyy, hh:mm a'
+        )}</p>
           <p style="margin: 8px 0 0 0; font-size: 12px;">© ${new Date().getFullYear()} CRM System - Professional Performance Report</p>
         </div>
       </div>
@@ -356,8 +336,8 @@ export default function AgentRatings() {
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4F46E5; padding-bottom: 15px;">
           <h1 style="color: #4F46E5; margin: 0; font-size: 24px; text-transform: uppercase;">Detailed Evaluations</h1>
           <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">${capitalizeText(
-            agentName
-          )} - ${capitalizeText(reportPeriod)} Report</p>
+        agentName
+      )} - ${capitalizeText(reportPeriod)} Report</p>
         </div>
 
         <!-- Detailed Evaluations Table -->
@@ -388,10 +368,9 @@ export default function AgentRatings() {
               </tr>
             </thead>
             <tbody>
-              ${
-                evaluationRows ||
-                '<tr><td colspan="18" style="padding: 20px; text-align: center; color: #6B7280;">No evaluations available</td></tr>'
-              }
+              ${evaluationRows ||
+        '<tr><td colspan="18" style="padding: 20px; text-align: center; color: #6B7280;">No evaluations available</td></tr>'
+        }
             </tbody>
           </table>
         </div>
@@ -475,7 +454,7 @@ export default function AgentRatings() {
       }
 
       // Fetch ticket evaluations for this agent
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:6010';
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/api/v1/qa/ticket/list?agentId=${agentId}`, {
         headers: {
@@ -508,8 +487,8 @@ export default function AgentRatings() {
       const avgScore =
         evaluations.length > 0
           ? (
-              evaluations.reduce((sum, ev) => sum + (ev.totalScore || 0), 0) / evaluations.length
-            ).toFixed(2)
+            evaluations.reduce((sum, ev) => sum + (ev.totalScore || 0), 0) / evaluations.length
+          ).toFixed(2)
           : 0;
       const highestScore =
         evaluations.length > 0
@@ -519,10 +498,10 @@ export default function AgentRatings() {
         avgScore >= 95
           ? 'Excellent'
           : avgScore >= 85
-          ? 'Good'
-          : avgScore >= 75
-          ? 'Needs Improvement'
-          : 'Fail';
+            ? 'Good'
+            : avgScore >= 75
+              ? 'Needs Improvement'
+              : 'Fail';
 
       // Generate PDF HTML for ticket evaluations
       const pdfHTML = `
@@ -760,7 +739,7 @@ export default function AgentRatings() {
             className="flex items-center gap-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50"
           >
             <Download size={18} />
-            {activeTab === 'chat' 
+            {activeTab === 'chat'
               ? (isDownloadingXlsx && !selectedAgentXlsx ? 'Exporting…' : 'Export All Excel')
               : (isDownloadingTicketXlsx && !selectedTicketAgentXlsx ? 'Exporting…' : 'Export All Excel')
             }
@@ -772,22 +751,20 @@ export default function AgentRatings() {
       <div className="flex gap-2 mb-4 border-b border-border ">
         <button
           onClick={() => setActiveTab('chat')}
-          className={`flex items-center gap-2 px-4 py-2 font-semibold transition-all ${
-            activeTab === 'chat'
+          className={`flex items-center gap-2 px-4 py-2 font-semibold transition-all ${activeTab === 'chat'
               ? 'border-b-2 border-indigo-600 text-indigo-600 '
               : 'text-muted-foreground  hover:text-foreground dark:hover:text-gray-200'
-          }`}
+            }`}
         >
           <MessageSquare size={18} />
           Chat Weightage
         </button>
         <button
           onClick={() => setActiveTab('ticket')}
-          className={`flex items-center gap-2 px-4 py-2 font-semibold transition-all ${
-            activeTab === 'ticket'
+          className={`flex items-center gap-2 px-4 py-2 font-semibold transition-all ${activeTab === 'ticket'
               ? 'border-b-2 border-indigo-600 text-indigo-600 '
               : 'text-muted-foreground  hover:text-foreground dark:hover:text-gray-200'
-          }`}
+            }`}
         >
           <Mail size={18} />
           Ticket Weightage
@@ -797,259 +774,257 @@ export default function AgentRatings() {
       {/* Chat Weightage Content */}
       {activeTab === 'chat' && (
         <>
-      {topAgent && (
-        <div className="mb-2 p-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg flex items-center gap-1 shadow">
-          <Trophy size={20} />
-          <div>
-            <p className="text-sm font-semibold">
-              Top Performer: {capitalizeText(topAgent.agentName)}
-            </p>
-            <p className="text-xs opacity-90">
-              Avg Score: {topAgent.avgScore}% | Evaluations: {topAgent.count}
-            </p>
-          </div>
-        </div>
-      )}
+          {topAgent && (
+            <div className="mb-2 p-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg flex items-center gap-1 shadow">
+              <Trophy size={20} />
+              <div>
+                <p className="text-sm font-semibold">
+                  Top Performer: {capitalizeText(topAgent.agentName)}
+                </p>
+                <p className="text-xs opacity-90">
+                  Avg Score: {topAgent.avgScore}% | Evaluations: {topAgent.count}
+                </p>
+              </div>
+            </div>
+          )}
 
-      {/* Performance Charts Section */}
-      {!isLoading && aggregates.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
-          {/* Bar Chart */}
-          <div className="bg-card  border border-border  rounded-lg shadow p-1.5">
-            <h3 className="text-sm font-semibold text-foreground  mb-2">
-              Average Score by Agent
-            </h3>
-            <Bar data={barChartData} options={chartOptions} />
-          </div>
+          {/* Performance Charts Section */}
+          {!isLoading && aggregates.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+              {/* Bar Chart */}
+              <div className="bg-card  border border-border  rounded-lg shadow p-1.5">
+                <h3 className="text-sm font-semibold text-foreground  mb-2">
+                  Average Score by Agent
+                </h3>
+                <Bar data={barChartData} options={chartOptions} />
+              </div>
 
-          {/* Doughnut Chart */}
-          <div className="bg-card  border border-border  rounded-lg shadow p-1.5">
-            <h3 className="text-sm font-semibold text-foreground  mb-2">
-              Evaluation Distribution
-            </h3>
-            <div className="flex items-start gap-4">
-              {/* Legend on the left */}
-              <div className="flex-shrink-0 w-56">
-                <div className="space-y-1.5">
-                  {agentNames.map((name, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-sm flex-shrink-0 mt-0.5" 
-                        style={{ 
-                          backgroundColor: [
-                            'rgba(255, 193, 7, 0.7)',
-                            'rgba(33, 150, 243, 0.7)',
-                            'rgba(76, 175, 80, 0.7)',
-                            'rgba(244, 67, 54, 0.7)',
-                            'rgba(156, 39, 176, 0.7)',
-                            'rgba(255, 87, 34, 0.7)',
-                          ][index % 6]
+              {/* Doughnut Chart */}
+              <div className="bg-card  border border-border  rounded-lg shadow p-1.5">
+                <h3 className="text-sm font-semibold text-foreground  mb-2">
+                  Evaluation Distribution
+                </h3>
+                <div className="flex items-start gap-4">
+                  {/* Legend on the left */}
+                  <div className="flex-shrink-0 w-56">
+                    <div className="space-y-1.5">
+                      {agentNames.map((name, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <div
+                            className="w-3 h-3 rounded-sm flex-shrink-0 mt-0.5"
+                            style={{
+                              backgroundColor: [
+                                'rgba(255, 193, 7, 0.7)',
+                                'rgba(33, 150, 243, 0.7)',
+                                'rgba(76, 175, 80, 0.7)',
+                                'rgba(244, 67, 54, 0.7)',
+                                'rgba(156, 39, 176, 0.7)',
+                                'rgba(255, 87, 34, 0.7)',
+                              ][index % 6]
+                            }}
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300 break-words leading-tight">
+                            {name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Chart on the right */}
+                  <div className="flex-1 flex justify-center">
+                    <div style={{ maxWidth: '320px', width: '100%' }}>
+                      <Doughnut
+                        data={doughnutChartData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: true,
+                          plugins: {
+                            legend: { display: false },
+                          },
                         }}
                       />
-                      <span className="text-xs text-gray-700 dark:text-gray-300 break-words leading-tight">
-                        {name}
-                      </span>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {/* Chart on the right */}
-              <div className="flex-1 flex justify-center">
-                <div style={{ maxWidth: '320px', width: '100%' }}>
-                  <Doughnut
-                    data={doughnutChartData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: true,
-                      plugins: {
-                        legend: { display: false },
-                      },
-                    }}
-                  />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      <div className="overflow-x-auto bg-card  border border-border  rounded-lg shadow w-full">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-muted/50 ">
-            <tr>
-              <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
-                Agent
-              </th>
-              <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
-                Evals
-              </th>
-              <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
-                Score
-              </th>
-              <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
-                Category
-              </th>
-              <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {isLoading && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-2 py-2 text-center text-sm text-muted-foreground "
-                >
-                  Loading Aggregates…
-                </td>
-              </tr>
-            )}
-            {!isLoading && aggregates.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-2 py-2 text-center text-sm text-muted-foreground "
-                >
-                  No Evaluations Yet.
-                </td>
-              </tr>
-            )}
-            {aggregates.map((row) => {
-              const performanceCategory =
-                row.avgScore >= 81
-                  ? 'Excellent'
-                  : row.avgScore >= 61
-                  ? 'Good'
-                  : row.avgScore >= 41
-                  ? 'Average'
-                  : row.avgScore >= 21
-                  ? 'Poor'
-                  : 'Very Poor';
-              const categoryColor =
-                row.avgScore >= 81
-                  ? 'text-green-600  bg-primary/5 dark:bg-green-900/30'
-                  : row.avgScore >= 61
-                  ? 'text-foreground  bg-card dark:bg-blue-900/30'
-                  : row.avgScore >= 41
-                  ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30'
-                  : row.avgScore >= 21
-                  ? 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30'
-                  : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
-
-              return (
-                <React.Fragment key={row._id}>
-                  <tr
-                    className="hover:bg-muted/50 dark:hover:bg-gray-700 cursor-pointer"
-                    onClick={() => setExpandedAgentId(expandedAgentId === row._id ? null : row._id)}
-                  >
-                    <td className="px-2 py-1.5 whitespace-nowrap text-sm font-semibold text-foreground  flex items-center gap-1">
-                      <ChevronDown
-                        size={14}
-                        className={`transform transition ${
-                          expandedAgentId === row._id ? 'rotate-180' : ''
-                        }`}
-                      />
-                      {capitalizeText(row.agentName)}
-                    </td>
-                    <td className="px-2 py-1.5 text-sm text-foreground  font-medium">
-                      {row.count}
-                    </td>
-                    <td className="px-2 py-1.5 text-sm text-foreground  font-semibold">
-                      {row.avgScore}%
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-bold ${categoryColor}`}
-                      >
-                        {capitalizeText(performanceCategory)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-0.5 flex-wrap">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadAgentPDF(row._id, row.agentName, 'daily');
-                          }}
-                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 rounded border border-red-200 whitespace-nowrap font-medium"
-                          title="Download Daily PDF Report"
-                        >
-                          <FileText size={10} />
-                          Daily
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadAgentPDF(row._id, row.agentName, 'weekly');
-                          }}
-                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 rounded border border-orange-200 whitespace-nowrap font-medium"
-                          title="Download Weekly PDF Report"
-                        >
-                          <FileText size={10} />
-                          Weekly
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadAgentPDF(row._id, row.agentName, 'monthly');
-                          }}
-                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 rounded border border-purple-200 whitespace-nowrap font-medium"
-                          title="Download Monthly PDF Report"
-                        >
-                          <FileText size={10} />
-                          Monthly
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExportXlsx(row._id, row.agentName);
-                          }}
-                          disabled={isDownloadingXlsx && selectedAgentXlsx === row._id}
-                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded border border-emerald-200 disabled:opacity-50 whitespace-nowrap font-medium"
-                          title="Download Excel Report"
-                        >
-                          <Download size={10} />
-                          <span>
-                            {isDownloadingXlsx && selectedAgentXlsx === row._id ? 'Exp…' : 'Excel'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedAgentId(expandedAgentId === row._id ? null : row._id);
-                          }}
-                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-card hover:bg-blue-100 bg-primary rounded border border-primary/20 whitespace-nowrap font-medium"
-                          title="View Details"
-                        >
-                          <ChevronDown
-                            size={10}
-                            className={`transform transition ${
-                              expandedAgentId === row._id ? 'rotate-180' : ''
-                            }`}
-                          />
-                          Details
-                        </button>
-                      </div>
+          <div className="overflow-x-auto bg-card  border border-border  rounded-lg shadow w-full">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-muted/50 ">
+                <tr>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+                    Agent
+                  </th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+                    Evals
+                  </th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+                    Score
+                  </th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+                    Category
+                  </th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {isLoading && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-2 py-2 text-center text-sm text-muted-foreground "
+                    >
+                      Loading Aggregates…
                     </td>
                   </tr>
-                  {expandedAgentId === row._id && (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-2">
-                        <DetailedAgentChart
-                          agentId={row._id}
-                          agentName={row.agentName}
-                          onClose={() => setExpandedAgentId(null)}
-                        />
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                )}
+                {!isLoading && aggregates.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-2 py-2 text-center text-sm text-muted-foreground "
+                    >
+                      No Evaluations Yet.
+                    </td>
+                  </tr>
+                )}
+                {aggregates.map((row) => {
+                  const performanceCategory =
+                    row.avgScore >= 81
+                      ? 'Excellent'
+                      : row.avgScore >= 61
+                        ? 'Good'
+                        : row.avgScore >= 41
+                          ? 'Average'
+                          : row.avgScore >= 21
+                            ? 'Poor'
+                            : 'Very Poor';
+                  const categoryColor =
+                    row.avgScore >= 81
+                      ? 'text-green-600  bg-primary/5 dark:bg-green-900/30'
+                      : row.avgScore >= 61
+                        ? 'text-foreground  bg-card dark:bg-blue-900/30'
+                        : row.avgScore >= 41
+                          ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30'
+                          : row.avgScore >= 21
+                            ? 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30'
+                            : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
+
+                  return (
+                    <React.Fragment key={row._id}>
+                      <tr
+                        className="hover:bg-muted/50 dark:hover:bg-gray-700 cursor-pointer"
+                        onClick={() => setExpandedAgentId(expandedAgentId === row._id ? null : row._id)}
+                      >
+                        <td className="px-2 py-1.5 whitespace-nowrap text-sm font-semibold text-foreground  flex items-center gap-1">
+                          <ChevronDown
+                            size={14}
+                            className={`transform transition ${expandedAgentId === row._id ? 'rotate-180' : ''
+                              }`}
+                          />
+                          {capitalizeText(row.agentName)}
+                        </td>
+                        <td className="px-2 py-1.5 text-sm text-foreground  font-medium">
+                          {row.count}
+                        </td>
+                        <td className="px-2 py-1.5 text-sm text-foreground  font-semibold">
+                          {row.avgScore}%
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-bold ${categoryColor}`}
+                          >
+                            {capitalizeText(performanceCategory)}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center gap-0.5 flex-wrap">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadAgentPDF(row._id, row.agentName, 'daily');
+                              }}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 rounded border border-red-200 whitespace-nowrap font-medium"
+                              title="Download Daily PDF Report"
+                            >
+                              <FileText size={10} />
+                              Daily
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadAgentPDF(row._id, row.agentName, 'weekly');
+                              }}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 rounded border border-orange-200 whitespace-nowrap font-medium"
+                              title="Download Weekly PDF Report"
+                            >
+                              <FileText size={10} />
+                              Weekly
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadAgentPDF(row._id, row.agentName, 'monthly');
+                              }}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 rounded border border-purple-200 whitespace-nowrap font-medium"
+                              title="Download Monthly PDF Report"
+                            >
+                              <FileText size={10} />
+                              Monthly
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportXlsx(row._id, row.agentName);
+                              }}
+                              disabled={isDownloadingXlsx && selectedAgentXlsx === row._id}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded border border-emerald-200 disabled:opacity-50 whitespace-nowrap font-medium"
+                              title="Download Excel Report"
+                            >
+                              <Download size={10} />
+                              <span>
+                                {isDownloadingXlsx && selectedAgentXlsx === row._id ? 'Exp…' : 'Excel'}
+                              </span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedAgentId(expandedAgentId === row._id ? null : row._id);
+                              }}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-card hover:bg-blue-100 bg-primary rounded border border-primary/20 whitespace-nowrap font-medium"
+                              title="View Details"
+                            >
+                              <ChevronDown
+                                size={10}
+                                className={`transform transition ${expandedAgentId === row._id ? 'rotate-180' : ''
+                                  }`}
+                              />
+                              Details
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedAgentId === row._id && (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-2">
+                            <DetailedAgentChart
+                              agentId={row._id}
+                              agentName={row.agentName}
+                              onClose={() => setExpandedAgentId(null)}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
@@ -1061,8 +1036,8 @@ export default function AgentRatings() {
             const ticketAggregates = ticketData?.data || [];
             const ticketTopAgent = ticketAggregates.length > 0
               ? ticketAggregates.reduce((prev, curr) =>
-                  parseFloat(curr.avgScore) > parseFloat(prev.avgScore) ? curr : prev
-                )
+                parseFloat(curr.avgScore) > parseFloat(prev.avgScore) ? curr : prev
+              )
               : null;
 
             const ticketAgentNames = ticketAggregates.map((row) => capitalizeText(row.agentName || 'Unknown'));
@@ -1141,9 +1116,9 @@ export default function AgentRatings() {
                           <div className="space-y-1.5">
                             {ticketAgentNames.map((name, index) => (
                               <div key={index} className="flex items-start gap-2">
-                                <div 
-                                  className="w-3 h-3 rounded-sm flex-shrink-0 mt-0.5" 
-                                  style={{ 
+                                <div
+                                  className="w-3 h-3 rounded-sm flex-shrink-0 mt-0.5"
+                                  style={{
                                     backgroundColor: [
                                       'rgba(255, 193, 7, 0.7)',
                                       'rgba(33, 150, 243, 0.7)',
@@ -1214,18 +1189,18 @@ export default function AgentRatings() {
                           parseFloat(row.avgScore) >= 95
                             ? 'Excellent'
                             : parseFloat(row.avgScore) >= 85
-                            ? 'Good'
-                            : parseFloat(row.avgScore) >= 75
-                            ? 'Needs Improvement'
-                            : 'Fail';
+                              ? 'Good'
+                              : parseFloat(row.avgScore) >= 75
+                                ? 'Needs Improvement'
+                                : 'Fail';
                         const categoryColor =
                           parseFloat(row.avgScore) >= 95
                             ? 'text-green-600  bg-primary/5 dark:bg-green-900/30'
                             : parseFloat(row.avgScore) >= 85
-                            ? 'text-foreground  bg-card dark:bg-blue-900/30'
-                            : parseFloat(row.avgScore) >= 75
-                            ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30'
-                            : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
+                              ? 'text-foreground  bg-card dark:bg-blue-900/30'
+                              : parseFloat(row.avgScore) >= 75
+                                ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30'
+                                : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
 
                         return (
                           <React.Fragment key={row._id}>
@@ -1236,9 +1211,8 @@ export default function AgentRatings() {
                               <td className="px-2 py-1.5 whitespace-nowrap text-sm font-semibold text-foreground  flex items-center gap-1">
                                 <ChevronDown
                                   size={14}
-                                  className={`transform transition ${
-                                    expandedTicketAgentId === row._id ? 'rotate-180' : ''
-                                  }`}
+                                  className={`transform transition ${expandedTicketAgentId === row._id ? 'rotate-180' : ''
+                                    }`}
                                 />
                                 {capitalizeText(row.agentName || 'Unknown')}
                               </td>
@@ -1312,9 +1286,8 @@ export default function AgentRatings() {
                                   >
                                     <ChevronDown
                                       size={10}
-                                      className={`transform transition ${
-                                        expandedTicketAgentId === row._id ? 'rotate-180' : ''
-                                      }`}
+                                      className={`transform transition ${expandedTicketAgentId === row._id ? 'rotate-180' : ''
+                                        }`}
                                     />
                                     Details
                                   </button>

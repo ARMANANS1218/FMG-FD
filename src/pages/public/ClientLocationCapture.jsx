@@ -9,7 +9,7 @@ const GOOGLE_MAPS_API_KEY =
   import.meta.env?.VITE_GOOGLE_MAPS_KEY ||
   (typeof __GOOGLE_MAPS_KEY__ !== 'undefined' ? __GOOGLE_MAPS_KEY__ : '') ||
   '';
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 const ClientLocationCapture = () => {
   const { token } = useParams();
