@@ -5,7 +5,7 @@ let socket = null;
 
 export const connectSocket = () => {
   const token = localStorage.getItem("token");
-  const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
 
   if (!socket || !socket.connected) {
     socket = io(SOCKET_URL, {
@@ -28,7 +28,7 @@ export const connectSocket = () => {
 
     socket.on("connect_error", (err) => {
       console.error("⚠️ Socket connection error:", err.message);
-      
+
       // Inform user if it's likely a backend wake-up issue
       if (err.message.includes('websocket error') || err.message.includes('xhr poll error')) {
         console.warn("💤 Backend may be sleeping (Render free tier). It will wake up in ~30-60 seconds.");

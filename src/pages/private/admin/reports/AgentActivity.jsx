@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useGetAllEmployeesQuery } from '../../../../features/admin/adminApi';
+import BreakDetailsModal from '../../../../components/common/BreakDetailsModal';
 import {
   format,
   startOfDay,
@@ -60,6 +61,10 @@ const AgentActivity = () => {
   // Month picker state
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Break Details Modal state
+  const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
+  const [selectedBreakAgent, setSelectedBreakAgent] = useState(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -145,7 +150,7 @@ const AgentActivity = () => {
       // Calculate time from login to now
       logoutTime = null; // Show "-" since they haven't logged out yet
       const totalTimeInMs = now - loginTime;
-      const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
+      const totalTimeInMinutes = totalTimeInMs / 60000;
 
       // Subtract break time to get active time
       activeTime = Math.max(0, totalTimeInMinutes - totalBreakDuration);
@@ -155,7 +160,7 @@ const AgentActivity = () => {
       if (logoutTimeRaw && logoutTimeRaw > loginTime) {
         logoutTime = logoutTimeRaw;
         const totalTimeInMs = logoutTime - loginTime;
-        const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
+        const totalTimeInMinutes = totalTimeInMs / 60000;
 
         // Subtract break time to get active time (breaks are NOT counted in online time)
         activeTime = Math.max(0, totalTimeInMinutes - totalBreakDuration);
@@ -163,7 +168,7 @@ const AgentActivity = () => {
         // No valid logout_time - treat current time as logout
         logoutTime = now;
         const totalTimeInMs = now - loginTime;
-        const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
+        const totalTimeInMinutes = totalTimeInMs / 60000;
         activeTime = Math.max(0, totalTimeInMinutes - totalBreakDuration);
       }
     }
@@ -190,11 +195,12 @@ const AgentActivity = () => {
   };
 
   const formatDuration = (minutes) => {
-    if (!minutes || minutes <= 0) return '0m';
-    const roundedMinutes = Math.round(minutes);
-    const hours = Math.floor(roundedMinutes / 60);
-    const mins = roundedMinutes % 60;
-    return hours > 0 ? `${hours}h ${mins.toString().padStart(2, '0')}m` : `${mins}m`;
+    if (!minutes || minutes < 0) return '00:00:00';
+    const totalSeconds = Math.round(minutes * 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
   };
 
   // Download individual agent Excel
@@ -444,8 +450,8 @@ const AgentActivity = () => {
       const avgOnlineTime =
         totalAgents > 0
           ? Math.round(
-              activeData.reduce((acc, a) => acc + (a.totalOnlineTime || 0), 0) / totalAgents
-            )
+            activeData.reduce((acc, a) => acc + (a.totalOnlineTime || 0), 0) / totalAgents
+          )
           : 0;
 
       // Prepare summary data
@@ -819,6 +825,9 @@ const AgentActivity = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Break Duration
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Break Reason
+                </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
@@ -845,15 +854,14 @@ const AgentActivity = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          agent.isBlocked
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                            : agent.is_active
-                              ? agent.workStatus === 'break'
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
-                              : 'bg-muted text-gray-800  '
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${agent.isBlocked
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                          : agent.is_active
+                            ? agent.workStatus === 'break'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
+                            : 'bg-muted text-gray-800  '
+                          }`}
                       >
                         {agent.isBlocked
                           ? 'Blocked'
@@ -883,7 +891,27 @@ const AgentActivity = () => {
                       {agent.activity.totalBreaks}
                     </td>
                     <td className="px-6 py-4 text-sm text-amber-600 dark:text-amber-400 font-medium">
-                      {formatDuration(agent.activity.breakDuration)}
+                      <div className="flex items-center gap-2">
+                        {formatDuration(agent.activity.breakDuration)}
+                        {agent.activity.totalBreaks > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBreakAgent(agent);
+                              setIsBreakModalOpen(true);
+                            }}
+                            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full transition-colors"
+                            title="View Break Details"
+                          >
+                            <Coffee size={14} className="text-amber-600 dark:text-amber-400" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className="text-sm font-medium text-amber-600 dark:text-amber-400 italic">
+                        {agent.workStatus === 'break' ? (agent.breakReason || 'Break') : '-'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -916,6 +944,17 @@ const AgentActivity = () => {
                           title="Download Monthly Report"
                         >
                           <FileSpreadsheet size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBreakAgent(agent);
+                            setIsBreakModalOpen(true);
+                          }}
+                          className="p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
+                          title="View Break Details"
+                        >
+                          <Coffee size={16} />
                         </button>
                         <button
                           onClick={(e) => {
@@ -1088,6 +1127,16 @@ const AgentActivity = () => {
           </table>
         </div>
       </div>
+
+      {/* Break Details Modal */}
+      <BreakDetailsModal
+        isOpen={isBreakModalOpen}
+        onClose={() => {
+          setIsBreakModalOpen(false);
+          setSelectedBreakAgent(null);
+        }}
+        employeeData={selectedBreakAgent}
+      />
     </div>
   );
 };

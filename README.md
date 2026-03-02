@@ -266,8 +266,8 @@ Create a `.env` file in the root directory:
 
 ```env
 # API Configuration
-VITE_API_URL=http://localhost:5000
-VITE_SOCKET_URL=http://localhost:5000
+VITE_API_URL=http://localhost:6010
+VITE_SOCKET_URL=http://localhost:6010
 
 # Google Maps API (for location features)
 VITE_GOOGLE_MAPS_KEY=your_google_maps_api_key
@@ -300,8 +300,8 @@ Production files will be in the `dist/` directory.
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `VITE_API_URL` | Backend API base URL | `http://localhost:5000` | Yes |
-| `VITE_SOCKET_URL` | WebSocket server URL | `http://localhost:5000` | Yes |
+| `VITE_API_URL` | Backend API base URL | `http://localhost:6010` | Yes |
+| `VITE_SOCKET_URL` | WebSocket server URL | `http://localhost:6010` | Yes |
 | `VITE_GOOGLE_MAPS_KEY` | Google Maps API key for location features | - | For location features |
 
 ### Vite Configuration

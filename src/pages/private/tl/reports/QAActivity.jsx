@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CircularProgress, Avatar } from '@mui/material';
-import { Clock, LogIn, LogOut, Coffee, Briefcase, FileDown, Calendar, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, FileSpreadsheet, Calendar, ChevronDown, ChevronUp, FileDown, Clock, LogIn, LogOut, Coffee, Briefcase } from 'lucide-react';
 import { useGetAllEmployeesQuery } from '../../../../features/admin/adminApi';
+import BreakDetailsModal from '../../../../components/common/BreakDetailsModal';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from 'react-toastify';
 import { Line } from 'react-chartjs-2';
@@ -37,6 +38,10 @@ const QAActivity = () => {
   const [qaHistory, setQAHistory] = useState({});
   const [loadingHistory, setLoadingHistory] = useState({});
 
+  // Break Details Modal state
+  const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
+  const [selectedBreakQA, setSelectedBreakQA] = useState(null);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -55,7 +60,7 @@ const QAActivity = () => {
     }
 
     setLoadingHistory(prev => ({ ...prev, [qaId]: true }));
-    
+
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002';
       const token = localStorage.getItem('token');
@@ -64,9 +69,9 @@ const QAActivity = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       const result = await response.json();
-      
+
       if (result.status && result.data) {
         setQAHistory(prev => ({ ...prev, [qaId]: result.data }));
         setExpandedQAId(qaId);
@@ -93,7 +98,7 @@ const QAActivity = () => {
   const qaWithActivity = qaMembers.map(qa => {
     const loginTime = qa.login_time ? new Date(qa.login_time) : null;
     const now = new Date();
-    
+
     // Calculate total break duration in minutes
     let totalBreakDuration = 0;
     let totalBreaks = 0;
@@ -106,11 +111,11 @@ const QAActivity = () => {
         return total;
       }, 0);
     }
-    
+
     // Determine logout time and calculate active time
     let logoutTime = null;
     let activeTime = 0;
-    
+
     if (!loginTime) {
       // No login time available
       logoutTime = null;
@@ -120,14 +125,14 @@ const QAActivity = () => {
       logoutTime = null; // Show "-" since they haven't logged out yet
       const totalTimeInMs = now - loginTime;
       const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
-      
+
       // For active QAs, if on break, we still count total time minus completed breaks
       // The current break (if any) duration is already in breakLogs
       activeTime = Math.max(0, totalTimeInMinutes - totalBreakDuration);
     } else {
       // QA is OFFLINE - use logout_time if available
       logoutTime = qa.logout_time ? new Date(qa.logout_time) : null;
-      
+
       if (logoutTime) {
         const totalTimeInMs = logoutTime - loginTime;
         const totalTimeInMinutes = Math.floor(totalTimeInMs / 60000);
@@ -137,10 +142,10 @@ const QAActivity = () => {
         activeTime = 0;
       }
     }
-    
+
     // TODO: Get actual evaluationsCompleted from database
     const evaluationsCompleted = 0;
-    
+
     return {
       ...qa,
       activity: {
@@ -318,7 +323,7 @@ const QAActivity = () => {
       const printWindow = window.open('', '_blank');
       printWindow.document.write(pdfHTML);
       printWindow.document.close();
-      
+
       setTimeout(() => {
         printWindow.print();
         toast.dismiss(toastId);
@@ -546,7 +551,7 @@ const QAActivity = () => {
             Track QA work hours, evaluations, and activity status
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleRefresh}
@@ -718,14 +723,13 @@ const QAActivity = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        qa.is_active 
-                          ? qa.workStatus === 'break'
-                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
-                          : 'bg-muted text-gray-800  '
-                      }`}>
-                        {qa.is_active 
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${qa.is_active
+                        ? qa.workStatus === 'break'
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                          : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
+                        : 'bg-muted text-gray-800  '
+                        }`}>
+                        {qa.is_active
                           ? qa.workStatus === 'break' ? 'On Break' : 'Online'
                           : 'Offline'
                         }
@@ -753,7 +757,22 @@ const QAActivity = () => {
                       {qa.activity.totalBreaks}
                     </td>
                     <td className="px-6 py-4 text-sm text-amber-600 dark:text-amber-400 font-medium">
-                      {formatDuration(qa.activity.breakDuration)}
+                      <div className="flex items-center gap-2">
+                        {formatDuration(qa.activity.breakDuration)}
+                        {qa.activity.totalBreaks > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBreakQA(qa);
+                              setIsBreakModalOpen(true);
+                            }}
+                            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full transition-colors"
+                            title="View Break Details"
+                          >
+                            <Coffee size={14} className="text-amber-600 dark:text-amber-400" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -804,7 +823,7 @@ const QAActivity = () => {
                       </div>
                     </td>
                   </tr>
-                  
+
                   {/* Expandable Section */}
                   {expandedQAId === qa._id && (
                     <tr>
@@ -818,12 +837,12 @@ const QAActivity = () => {
                             <h3 className="text-lg font-semibold text-foreground mb-4">
                               Last 30 Days Activity - {qa.name}
                             </h3>
-                            
+
                             {/* Chart */}
                             <div className="bg-card  p-6 rounded-lg border border-border ">
                               <Line
                                 data={{
-                                  labels: qaHistory[qa._id].map(day => 
+                                  labels: qaHistory[qa._id].map(day =>
                                     format(new Date(day.date), 'MMM dd')
                                   ).reverse(),
                                   datasets: [{
@@ -846,7 +865,7 @@ const QAActivity = () => {
                                     },
                                     tooltip: {
                                       callbacks: {
-                                        label: function(context) {
+                                        label: function (context) {
                                           const minutes = context.parsed.y;
                                           const hours = Math.floor(minutes / 60);
                                           const mins = Math.round(minutes % 60);
@@ -859,7 +878,7 @@ const QAActivity = () => {
                                     y: {
                                       beginAtZero: true,
                                       ticks: {
-                                        callback: function(value) {
+                                        callback: function (value) {
                                           const hours = Math.floor(value / 60);
                                           return `${hours}h`;
                                         }
@@ -935,6 +954,16 @@ const QAActivity = () => {
           </table>
         </div>
       </div>
+
+      {/* Break Details Modal */}
+      <BreakDetailsModal
+        isOpen={isBreakModalOpen}
+        onClose={() => {
+          setIsBreakModalOpen(false);
+          setSelectedBreakQA(null);
+        }}
+        employeeData={selectedBreakQA}
+      />
     </div>
   );
 };

@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
-export default function CallLogsDatewise({ 
-  calls = [], 
-  isLoading = false, 
+export default function CallLogsDatewise({
+  calls = [],
+  isLoading = false,
   onDeleteCall = null,
   onClearDate = null,
   onClearAll = null,
@@ -29,11 +29,11 @@ export default function CallLogsDatewise({
   // Group calls by date
   const groupedCalls = useMemo(() => {
     const groups = {};
-    
+
     calls.forEach(call => {
       const callDate = new Date(call.createdAt);
       const dateKey = format(callDate, 'yyyy-MM-dd');
-      
+
       if (!groups[dateKey]) {
         groups[dateKey] = {
           date: callDate,
@@ -42,10 +42,10 @@ export default function CallLogsDatewise({
           calls: []
         };
       }
-      
+
       groups[dateKey].calls.push(call);
     });
-    
+
     // Sort by date descending (newest first)
     return Object.values(groups)
       .sort((a, b) => b.date - a.date)
@@ -67,7 +67,7 @@ export default function CallLogsDatewise({
 
   const handleDeleteCall = async (callId) => {
     if (!onDeleteCall) return;
-    
+
     setDeletingId(callId);
     try {
       await onDeleteCall(callId);
@@ -81,13 +81,13 @@ export default function CallLogsDatewise({
 
   const handleClearDate = async (dateKey, dateString) => {
     if (!onClearDate) return;
-    
+
     const confirmed = window.confirm(
       `Are you sure you want to delete all call logs for ${dateString}? This cannot be undone.`
     );
-    
+
     if (!confirmed) return;
-    
+
     try {
       await onClearDate(dateKey);
       toast.success(`All call logs for ${dateString} have been deleted`);
@@ -98,13 +98,13 @@ export default function CallLogsDatewise({
 
   const handleClearAll = async () => {
     if (!onClearAll) return;
-    
+
     const confirmed = window.confirm(
       'Are you sure you want to delete ALL call logs? This cannot be undone.'
     );
-    
+
     if (!confirmed) return;
-    
+
     try {
       await onClearAll();
       toast.success('All call logs have been deleted');
@@ -189,7 +189,7 @@ export default function CallLogsDatewise({
             Call History ({calls.length})
           </h3>
         </div>
-        
+
         {['Agent', 'QA', 'TL'].includes(userRole) && onClearAll && (
           <button
             onClick={handleClearAll}
@@ -206,9 +206,9 @@ export default function CallLogsDatewise({
         {groupedCalls.map((group, groupIdx) => {
           const dateKey = format(group.date, 'yyyy-MM-dd');
           const isExpanded = expandedDates.has(dateKey);
-          
+
           return (
-            <div 
+            <div
               key={groupIdx}
               className="bg-card  rounded-lg border border-border  overflow-hidden"
             >
@@ -242,7 +242,7 @@ export default function CallLogsDatewise({
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
-                  
+
                   <button
                     onClick={() => toggleDateExpanded(dateKey)}
                     className="p-1"
@@ -262,9 +262,9 @@ export default function CallLogsDatewise({
                   {group.calls.map((call, callIdx) => {
                     const caller = call?.participants?.find(p => p.role === 'caller')?.userId;
                     const receiver = call?.participants?.find(p => p.role === 'receiver')?.userId;
-                    
+
                     return (
-                      <div 
+                      <div
                         key={callIdx}
                         className="p-2 hover:bg-muted/50 dark:hover:bg-slate-700/50 transition-colors"
                       >
@@ -279,7 +279,7 @@ export default function CallLogsDatewise({
                                   <Phone className="w-4 h-4 text-gray-400 dark:text-muted-foreground" />
                                 )}
                               </div>
-                              
+
                               <div className="flex-1">
                                 <p className="font-medium text-foreground">
                                   {caller?.name || 'Unknown Caller'}
@@ -302,7 +302,7 @@ export default function CallLogsDatewise({
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(call.status)}`}>
                                 {call.status.charAt(0).toUpperCase() + call.status.slice(1)}
                               </span>
-                              
+
                               {call.duration && (
                                 <span className="text-xs text-muted-foreground  bg-muted /40 px-2 py-1 rounded">
                                   {formatDuration(call.duration)}

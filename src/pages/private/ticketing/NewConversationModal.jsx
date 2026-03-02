@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import ColorModeContext from '../../../context/ColorModeContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 /**
  * NewConversationModal: Modal for creating internal tickets

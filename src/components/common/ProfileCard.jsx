@@ -51,7 +51,9 @@ const ProfileCard = ({ agent, onToggle, role }) => {
 
   const handleToggle = async () => {
     try {
-      await toggleBreak().unwrap();
+      // If going from active to break, pass a default reason
+      const reason = 'Break'; // Generic fallback for quick toggle
+      await toggleBreak({ reason }).unwrap();
       toast.success(`Status changed to ${agent?.data?.is_active ? 'Break' : 'Active'}`);
       if (onToggle) onToggle(agent._id);
     } catch (error) {
@@ -85,9 +87,8 @@ const ProfileCard = ({ agent, onToggle, role }) => {
               )}
             </div>
             <div
-              className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${
-                agent?.data?.is_active ? 'bg-primary/50' : 'bg-gray-400'
-              }`}
+              className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${agent?.data?.is_active ? 'bg-primary/50' : 'bg-gray-400'
+                }`}
             ></div>
           </div>
           <div className="flex-1">

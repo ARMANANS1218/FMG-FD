@@ -1,12 +1,12 @@
 // src/features/tickets/ticketApi.js
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 export const ticketApi = createApi({
   reducerPath: 'ticketApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URL}/api/v1`, 
+    baseUrl: `${API_URL}/api/v1`,
     prepareHeaders: (headers, { getState }) => {
       const token = localStorage.getItem('token');
       if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -54,7 +54,7 @@ export const ticketApi = createApi({
         method: 'GET',
       }),
     }),
-     // Get replies
+    // Get replies
     getTicketReplies: builder.query({
       query: (ticketId) => ({
         url: `/tickets/replies/${ticketId}`,

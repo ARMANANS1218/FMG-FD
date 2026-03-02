@@ -3,120 +3,80 @@ import { useNavigate } from 'react-router-dom';
 import { CircularProgress, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Tooltip } from '@mui/material';
 import { Search, Eye, Phone, Mail, MapPin, Calendar, UserCog, Edit, User, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { useGetCustomerListQuery, useSearchCustomersQuery, useDeleteCustomerMutation, useUpdateCustomerDetailsMutation } from '../../../features/customer/customerApi';
 
 const CustomerList = () => {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [viewDialog, setViewDialog] = useState({ open: false, customer: null });
   const [editDialog, setEditDialog] = useState({ open: false, customer: null });
-  const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [totalCustomers, setTotalCustomers] = useState(0);
-  const [isSearchMode, setIsSearchMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  // RTK Query Hooks
+  const isSearchMode = debouncedQuery.trim().length >= 2;
 
-  // Fetch all customers in organization
-  const fetchMyCustomers = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/api/v1/customer/list?page=${page}&limit=${itemsPerPage}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      if (response.data.status && response.data.data) {
-        setCustomers(response.data.data || []);
-        setTotalCustomers(response.data.total || 0);
-      } else {
-        setCustomers([]);
-        setTotalCustomers(0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
-      toast.error('Failed to load customers');
-      setCustomers([]);
-      setTotalCustomers(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: listData,
+    isLoading: isListLoading,
+    isFetching: isListFetching,
+    refetch: refetchList
+  } = useGetCustomerListQuery(
+    { page, limit: itemsPerPage },
+    { skip: isSearchMode }
+  );
 
-  // Search customers with debouncing
-  const searchCustomers = async (query) => {
-    if (!query || query.trim().length < 2) {
-      setIsSearchMode(false);
-      setPage(1);
-      return;
-    }
+  const {
+    data: searchData,
+    isLoading: isSearchLoading,
+    isFetching: isSearchFetching,
+    refetch: refetchSearch
+  } = useSearchCustomersQuery(
+    { q: debouncedQuery },
+    { skip: !isSearchMode }
+  );
 
-    setLoading(true);
-    setIsSearchMode(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/v1/customer/search?q=${encodeURIComponent(query.trim())}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.status && response.data.data) {
-        setCustomers(response.data.data || []);
-        setTotalCustomers(response.data.data?.length || 0);
-      } else if (response.data.success && response.data.customers) {
-        setCustomers(response.data.customers || []);
-        setTotalCustomers(response.data.customers?.length || 0);
-      } else {
-        setCustomers([]);
-        setTotalCustomers(0);
-      }
-    } catch (error) {
-      console.error('Failed to search customers:', error);
-      if (error.response?.status !== 400) {
-        toast.error('Failed to search customers');
-      }
-      setCustomers([]);
-      setTotalCustomers(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load customers on mount and when page/itemsPerPage changes
-  useEffect(() => {
-    if (!isSearchMode) {
-      fetchMyCustomers();
-    }
-  }, [page, itemsPerPage, isSearchMode]);
+  const [deleteCustomer, { isLoading: isDeleting }] = useDeleteCustomerMutation();
+  const [updateCustomer, { isLoading: isUpdating }] = useUpdateCustomerDetailsMutation();
 
   // Debounce search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchQuery) {
-        searchCustomers(searchQuery);
-      } else {
-        setIsSearchMode(false);
+      setDebouncedQuery(searchQuery);
+      if (!searchQuery) {
+        setPage(1);
       }
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  // Derived state
+  const loading = isListLoading || isListFetching || isSearchLoading || isSearchFetching;
+  const saving = isUpdating;
+
+  let customers = [];
+  let totalCustomers = 0;
+
+  if (isSearchMode) {
+    customers = searchData?.data || searchData?.customers || [];
+    totalCustomers = searchData?.data?.length || searchData?.customers?.length || 0;
+  } else {
+    customers = listData?.data || [];
+    totalCustomers = listData?.total || 0;
+  }
+
   const totalPages = Math.ceil(totalCustomers / itemsPerPage);
 
   const handleViewCustomer = (customer) => {
-    // Navigate to full page view
     navigate(`${customer._id}`);
   };
 
   const handleRowClick = (customer) => {
-    // Navigate to full page when row is clicked
     navigate(`${customer._id}`);
   };
 
@@ -130,26 +90,11 @@ const CustomerList = () => {
     if (!customerToDelete) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(
-        `${API_URL}/api/v1/customer/${customerToDelete}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      if (response.data.status) {
-        toast.success('Customer deleted successfully');
-        // Refresh the list
-        if (isSearchMode) {
-          searchCustomers(searchQuery);
-        } else {
-          fetchMyCustomers();
-        }
-      } else {
-        toast.error(response.data.message || 'Failed to delete customer');
-      }
+      await deleteCustomer(customerToDelete).unwrap();
+      toast.success('Customer deleted successfully');
     } catch (error) {
       console.error('Failed to delete customer:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete customer');
+      toast.error(error.data?.message || 'Failed to delete customer');
     } finally {
       setShowDeleteModal(false);
       setCustomerToDelete(null);
@@ -159,29 +104,13 @@ const CustomerList = () => {
   const handleSaveEdit = async () => {
     if (!editDialog.customer) return;
 
-    setSaving(true);
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${API_URL}/api/v1/customer/${editDialog.customer._id}`,
-        editDialog.customer,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
+      await updateCustomer({ id: editDialog.customer._id, data: editDialog.customer }).unwrap();
       toast.success('Customer updated successfully');
       setEditDialog({ open: false, customer: null });
-      
-      // Refresh the list
-      if (isSearchMode) {
-        searchCustomers(searchQuery);
-      } else {
-        fetchMyCustomers();
-      }
     } catch (error) {
       console.error('Failed to update customer:', error);
-      toast.error('Failed to update customer');
-    } finally {
-      setSaving(false);
+      toast.error(error.data?.message || 'Failed to update customer');
     }
   };
 
@@ -226,63 +155,63 @@ const CustomerList = () => {
         {/* Header */}
         <div className="bg-card  shadow-md p-4">
           <div className="flex items-center justify-between mb-3">
-             <div className="flex items-center gap-3 w-full">
-            {/* Search Bar */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <input
-                type="text"
-                placeholder="Search customers by name, email, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              />
-            </div>
-
-             {/* Items per page selector */}
-            {!isSearchMode && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground whitespace-nowrap">Show:</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer outline-none"
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+            <div className="flex items-center gap-3 w-full">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search customers by name, email, or phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
               </div>
-            )}
 
-            {/* Refresh Button */}
-             <button
-              onClick={() => {
-                setIsRefreshing(true);
-                if (isSearchMode) {
-                   searchCustomers(searchQuery);
-                } else {
-                   fetchMyCustomers();
-                }
-                 setTimeout(() => setIsRefreshing(false), 500);
-              }}
-              disabled={isRefreshing}
-              className="p-2 border border-border dark:border-gray-600 rounded-lg hover:bg-muted dark:hover:bg-gray-700 text-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refresh List"
-            >
-              <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
-            </button>
+              {/* Items per page selector */}
+              {!isSearchMode && (
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground whitespace-nowrap">Show:</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer outline-none"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Refresh Button */}
+              <button
+                onClick={() => {
+                  setIsRefreshing(true);
+                  if (isSearchMode) {
+                    refetchSearch();
+                  } else {
+                    refetchList();
+                  }
+                  setTimeout(() => setIsRefreshing(false), 500);
+                }}
+                disabled={isRefreshing}
+                className="p-2 border border-border dark:border-gray-600 rounded-lg hover:bg-muted dark:hover:bg-gray-700 text-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh List"
+              >
+                <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+              </button>
             </div>
           </div>
-            {loading && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <CircularProgress size={20} className="text-primary" />
-              </div>
-            )}
-          </div>
+          {loading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <CircularProgress size={20} className="text-primary" />
+            </div>
+          )}
+        </div>
 
         {/* Content Area - Scrollable */}
         <div className="flex-1 overflow-y-auto">
@@ -296,8 +225,8 @@ const CustomerList = () => {
                   {isSearchMode ? 'No Customers Found' : 'No Customers Yet'}
                 </h3>
                 <p className="text-muted-foreground ">
-                  {isSearchMode 
-                    ? `No customers match your search: "${searchQuery}"` 
+                  {isSearchMode
+                    ? `No customers match your search: "${searchQuery}"`
                     : 'No customers in your organization yet'}
                 </p>
               </div>
@@ -383,8 +312,8 @@ const CustomerList = () => {
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                               ${customer.serviceStatus === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                                 customer.serviceStatus === 'Inactive' ? 'bg-muted text-gray-800 dark:bg-gray-700 dark:text-gray-300' :
-                                customer.serviceStatus === 'Suspended' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                  customer.serviceStatus === 'Suspended' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                               }`}
                             >
                               {customer.serviceStatus}

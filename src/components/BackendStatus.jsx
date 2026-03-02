@@ -11,8 +11,8 @@ export default function BackendStatus() {
 
   useEffect(() => {
     const checkBackend = async () => {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
+
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);

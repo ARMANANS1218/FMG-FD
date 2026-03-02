@@ -215,7 +215,7 @@ className="w-[500px]"  // Larger
 Set the API URL in the widget file or via environment variable:
 
 ```jsx
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 ```
 
 For production:

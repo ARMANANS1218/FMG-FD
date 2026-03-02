@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 export const chatApi = createApi({
   reducerPath: 'chatApi',
@@ -22,7 +22,7 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ['Chat']
     }),
-   getConversation: builder.query({
+    getConversation: builder.query({
       query: (id) => `/conversation/${id}`,
       providesTags: ['Chat']
     }),
@@ -46,4 +46,4 @@ export const chatApi = createApi({
   })
 });
 
-export const {useSendMessageMutation, useGetConversationQuery , useReplyToPetitionMutation,useTransferPetitionMutation } = chatApi;
+export const { useSendMessageMutation, useGetConversationQuery, useReplyToPetitionMutation, useTransferPetitionMutation } = chatApi;

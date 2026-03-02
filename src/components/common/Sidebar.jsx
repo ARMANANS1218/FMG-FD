@@ -121,11 +121,10 @@ export default function Sidebar({
       return item.route ? (
         <Link
           to={item.route}
-          className={`flex justify-center py-3 my-1 mx-2 rounded-xl transition-all duration-200 group relative ${
-            isActive
-              ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-              : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
-          }`}
+          className={`flex justify-center py-3 my-1 mx-2 rounded-xl transition-all duration-200 group relative ${isActive
+            ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+            : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
+            }`}
         >
           {item.icon && <item.icon size={20} />}
           <span className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-border">
@@ -144,7 +143,7 @@ export default function Sidebar({
     const activeClasses = `
       bg-background text-primary font-bold
       border-y border-l border-border border-r-0 
-      mr-0 z-20 shadow-sm rounded-l-full rounded-r-none relative
+      mr-[-1px] z-20 shadow-sm rounded-l-full rounded-r-none relative
     `;
 
     // Inactive Item Style
@@ -169,7 +168,7 @@ export default function Sidebar({
             <div className="absolute -top-4 right-0 w-4 h-4 pointer-events-none overflow-hidden z-20">
               <div className="absolute inset-0 bg-background" />
               <svg
-                className="absolute inset-0 w-full h-full text-[rgb(var(--border))] fill-transparent"
+                className="absolute inset-0 w-full h-full text-border fill-transparent"
                 viewBox="0 0 16 16"
               >
                 <path
@@ -186,7 +185,7 @@ export default function Sidebar({
             <div className="absolute -bottom-4 right-0 w-4 h-4 pointer-events-none overflow-hidden z-20">
               <div className="absolute inset-0 bg-background" />
               <svg
-                className="absolute inset-0 w-full h-full text-[rgb(var(--border))] fill-transparent"
+                className="absolute inset-0 w-full h-full text-border fill-transparent"
                 viewBox="0 0 16 16"
               >
                 <path
@@ -266,14 +265,12 @@ export default function Sidebar({
       <aside
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`fixed top-0 left-0 h-screen bg-background border-r-0 z-30 transition-all duration-300 ease-out`}
+        className={`fixed top-0 left-0 h-screen bg-background border-r border-border z-30 transition-all duration-300 ease-out`}
         style={{
           width: isExpanded ? width : 64,
           boxShadow: isExpanded && !open ? '4px 0 12px rgba(0, 0, 0, 0.05)' : 'none',
         }}
       >
-        {/* Border Line - Absolute to allow overlap */}
-        <div className="absolute top-0 right-0 w-[1px] h-full bg-border z-0" />
 
         {/* Logo Area */}
         <div className="h-16 border-b border-border flex items-center bg-primary/5 px-4 overflow-hidden relative z-10">

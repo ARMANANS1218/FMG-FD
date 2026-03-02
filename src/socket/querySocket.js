@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
 
 let querySocket = null;
 
@@ -11,7 +11,7 @@ export function getQuerySocket() {
   }
   const token = localStorage.getItem('token');
   console.log('🔍 DEBUG: Creating new query socket with token:', token ? 'Present' : 'Missing');
-  
+
   querySocket = io(`${API_URL}/query`, {
     path: '/socket.io',
     auth: { token },
@@ -27,18 +27,18 @@ export function getQuerySocket() {
   querySocket.on('connect_error', (err) => {
     console.error('❌ [query] connect_error:', err.message, err);
   });
-  
+
   // Add listener for new-pending-query to verify event reception
   querySocket.on('new-pending-query', (data) => {
     console.log('📨 [DEBUG] Received new-pending-query event:', data);
   });
-  
+
   return querySocket;
 }
 
 export function closeQuerySocket() {
   if (querySocket) {
-    try { querySocket.disconnect(); } catch {}
+    try { querySocket.disconnect(); } catch { }
     querySocket = null;
   }
 }

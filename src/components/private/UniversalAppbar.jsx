@@ -195,7 +195,7 @@ const UniversalAppbar = ({ children }) => {
       setBreakMenuAnchor(null);
 
       // First trigger the break
-      const res = await toggleBreak().unwrap();
+      const res = await toggleBreak({ reason }).unwrap();
       toast.success(`Break started - ${reason}`);
 
       // ✅ FIX: Immediately fetch accumulated time when GOING on break
@@ -526,7 +526,7 @@ const UniversalAppbar = ({ children }) => {
                     </Stack>
                   </Tooltip>
 
-                  {/* Status Toggle Switch */}  
+                  {/* Status Toggle Switch */}
                   <Tooltip
                     title={
                       agent?.workStatus === 'active'
@@ -826,23 +826,26 @@ const UniversalAppbar = ({ children }) => {
                 py: 1,
                 cursor: 'pointer',
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                  backgroundColor: theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)',
                 },
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
-                fontSize: '0.9rem',
+                gap: 1.5,
+                transition: 'background-color 0.2s',
               }}
             >
               <Box
                 sx={{
-                  width: 6,
-                  height: 6,
+                  width: 8,
+                  height: 8,
                   borderRadius: '50%',
                   backgroundColor: option.color,
+                  boxShadow: `0 0 4px ${option.color}40`,
                 }}
               />
-              {option.label}
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                {option.label}
+              </Typography>
             </Box>
           ))}
         </Box>

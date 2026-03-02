@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AlertTriangle, Link as LinkIcon, Building2, User, Mail, Calendar } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 const LinkUnlinkedAdmins = () => {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ const LinkUnlinkedAdmins = () => {
       );
 
       toast.success(response.data.message || 'Admin linked successfully!');
-      
+
       // Refresh the list
       await fetchData();
       setSelectedAdmin(null);

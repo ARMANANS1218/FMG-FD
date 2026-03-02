@@ -8,12 +8,13 @@ import {
   Briefcase,
   Calendar,
   RefreshCw,
-  ChevronDown,
   ChevronUp,
+  ChevronDown,
   FileSpreadsheet,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useGetAllEmployeesQuery } from '../../../../features/admin/adminApi';
+import BreakDetailsModal from '../../../../components/common/BreakDetailsModal';
 import {
   format,
   startOfDay,
@@ -60,6 +61,10 @@ const AgentActivity = () => {
   // Month picker state
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Break Details Modal state
+  const [isBreakModalOpen, setIsBreakModalOpen] = useState(false);
+  const [selectedBreakAgent, setSelectedBreakAgent] = useState(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -443,8 +448,8 @@ const AgentActivity = () => {
       const avgOnlineTime =
         totalAgents > 0
           ? Math.round(
-              activeData.reduce((acc, a) => acc + (a.totalOnlineTime || 0), 0) / totalAgents
-            )
+            activeData.reduce((acc, a) => acc + (a.totalOnlineTime || 0), 0) / totalAgents
+          )
           : 0;
 
       // Prepare summary data
@@ -839,15 +844,14 @@ const AgentActivity = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          agent.isBlocked
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                            : agent.is_active
-                              ? agent.workStatus === 'break'
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
-                              : 'bg-muted text-gray-800  '
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${agent.isBlocked
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                          : agent.is_active
+                            ? agent.workStatus === 'break'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900/30 '
+                            : 'bg-muted text-gray-800  '
+                          }`}
                       >
                         {agent.isBlocked
                           ? 'Blocked'
@@ -877,7 +881,22 @@ const AgentActivity = () => {
                       {agent.activity.totalBreaks}
                     </td>
                     <td className="px-6 py-4 text-sm text-amber-600 dark:text-amber-400 font-medium">
-                      {formatDuration(agent.activity.breakDuration)}
+                      <div className="flex items-center gap-2">
+                        {formatDuration(agent.activity.breakDuration)}
+                        {agent.activity.totalBreaks > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBreakAgent(agent);
+                              setIsBreakModalOpen(true);
+                            }}
+                            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-full transition-colors"
+                            title="View Break Details"
+                          >
+                            <Coffee size={14} className="text-amber-600 dark:text-amber-400" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -1082,6 +1101,16 @@ const AgentActivity = () => {
           </table>
         </div>
       </div>
+
+      {/* Break Details Modal */}
+      <BreakDetailsModal
+        isOpen={isBreakModalOpen}
+        onClose={() => {
+          setIsBreakModalOpen(false);
+          setSelectedBreakAgent(null);
+        }}
+        employeeData={selectedBreakAgent}
+      />
     </div>
   );
 };

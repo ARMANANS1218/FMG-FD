@@ -25,6 +25,9 @@ import {
   FileCheck,
   Key,
   Receipt,
+  Package,
+  Briefcase,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const menuData = {
@@ -97,6 +100,21 @@ export const menuData = {
           name: 'Customers',
           icon: UserCog,
           route: '/admin/customers',
+        },
+        {
+          name: 'Products',
+          icon: Package,
+          route: '/admin/products',
+        },
+        {
+          name: 'GDPR Requests',
+          icon: ShieldCheck,
+          route: '/admin/gdpr-requests',
+        },
+        {
+          name: 'Cases',
+          icon: Briefcase,
+          route: '/admin/cases',
         },
         {
           name: 'Attendance',
@@ -189,6 +207,16 @@ export const menuData = {
           route: '/agent/customers',
         },
         {
+          name: 'Products',
+          icon: Package,
+          route: '/agent/products',
+        },
+        {
+          name: 'Cases',
+          icon: Briefcase,
+          route: '/agent/cases',
+        },
+        {
           name: 'Attendance',
           icon: Calendar,
           subMenu: [
@@ -241,6 +269,16 @@ export const menuData = {
           route: '/qa/customers',
         },
         {
+          name: 'Products',
+          icon: Package,
+          route: '/qa/products',
+        },
+        {
+          name: 'Cases',
+          icon: Briefcase,
+          route: '/qa/cases',
+        },
+        {
           name: 'Training Material',
           icon: BookOpen,
           route: '/qa/training-material',
@@ -270,6 +308,8 @@ export const menuData = {
         // { name: "Calls", icon: Phone, route: "/tl/calls" },
         { name: 'Screenshots', icon: Camera, route: '/tl/screenshots' },
         { name: 'Customers', icon: UserCog, route: '/tl/customers' },
+        { name: 'Products', icon: Package, route: '/tl/products' },
+        { name: 'Cases', icon: Briefcase, route: '/tl/cases' },
         { name: 'Training Material', icon: BookOpen, route: '/tl/training-material' },
         {
           name: 'Attendance',
@@ -314,6 +354,7 @@ export const menuData = {
       items: [
         { name: 'Dashboard', icon: LayoutDashboard, route: '/management' },
         { name: 'Employees', icon: Users, route: '/management/employees' },
+        { name: 'GDPR Requests', icon: ShieldCheck, route: '/management/gdpr-requests' },
         {
           name: 'Attendance',
           icon: Calendar,

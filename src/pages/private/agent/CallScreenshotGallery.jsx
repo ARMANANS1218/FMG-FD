@@ -20,9 +20,8 @@ import { format } from 'date-fns';
 import ConfirmDialog from '../../../components/ConfirmDialog';
 import { useGetProfileQuery } from '../../../features/auth/authApi';
 
-const IMG_BASE_URL = `${
-  import.meta.env.VITE_API_URL || 'http://localhost:5000'
-}/uploads/call-screenshots`;
+const IMG_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:6010'
+  }/uploads/call-screenshots`;
 
 // Helper to get image URL (Cloudinary or fallback to local)
 const getImageUrl = (screenshot) => {
@@ -62,7 +61,7 @@ export default function CallScreenshotGallery() {
       screenshot?.metadata?.agentName ||
       (Array.isArray(screenshot?.participants)
         ? screenshot.participants.find((p) => ['Agent', 'QA', 'TL'].includes(p?.role))?.name ||
-          screenshot.participants.find((p) => p?.name)?.name
+        screenshot.participants.find((p) => p?.name)?.name
         : null) ||
       'Agent'
     );
@@ -147,7 +146,7 @@ export default function CallScreenshotGallery() {
       {/* Header */}
       <div className="mb-2">
         <div className="bg-card  rounded-lg shadow-md p-1 sm:p-2">
-          
+
           <div className="flex flex-col xl:flex-row items-center gap-2">
             {/* Search - Flexible width */}
             <div className="relative flex-1 w-full">
@@ -163,7 +162,7 @@ export default function CallScreenshotGallery() {
                 className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-card text-foreground"
               />
             </div>
-            
+
             {/* Filters Row */}
             <div className="flex w-full xl:w-auto gap-2">
               <div className="w-full sm:w-48">
@@ -190,7 +189,7 @@ export default function CallScreenshotGallery() {
                 />
               </div>
 
-               {/* Refresh Button */}
+              {/* Refresh Button */}
               <button
                 onClick={async () => {
                   setIsRefreshing(true);

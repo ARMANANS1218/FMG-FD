@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUpdateQueryDetailsMutation } from '@/features/query/queryApi';
+import { useUpdateQueryDetailsMutation } from '../../features/query/queryApi';
 
 // ── Dropdowns ──────────────────────────────────────────────
 const CONTACT_REASONS = [
@@ -116,8 +116,8 @@ export default function FmcgQueryPanel({ query }) {
                         key={t.key}
                         onClick={() => setPanelTab(t.key)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${panelTab === t.key
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
                             }`}
                     >{t.label}</button>
                 ))}

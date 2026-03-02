@@ -37,15 +37,14 @@ const WidgetDemo = () => {
                 <p className="text-sm text-muted-foreground ">Test the chat widget integration</p>
               </div>
             </div>
-            
+
             {/* Login/Logout Button */}
             <button
               onClick={isLoggedIn ? handleLogout : handleLogin}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                isLoggedIn
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${isLoggedIn
                   ? 'bg-red-500 hover:bg-red-600 text-white'
                   : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-              }`}
+                }`}
             >
               {isLoggedIn ? 'Logout' : 'Login as Test User'}
             </button>
@@ -55,7 +54,7 @@ const WidgetDemo = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        
+
         {/* User Status Card */}
         <div className="mb-8 bg-card  rounded-xl shadow-lg p-6 border border-border ">
           <div className="flex items-start justify-between">
@@ -94,7 +93,7 @@ const WidgetDemo = () => {
 
         {/* Info Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          
+
           {/* Widget Info */}
           <div className="bg-card  rounded-xl shadow-lg p-6 border border-border ">
             <div className="flex items-center justify-between mb-4">
@@ -127,17 +126,16 @@ const WidgetDemo = () => {
           <div className="bg-card  rounded-xl shadow-lg p-6 border border-border ">
             <div className="flex items-center justify-between mb-4">
               <Users className="text-foreground " size={32} />
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                isLoggedIn 
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${isLoggedIn
                   ? 'bg-blue-100 dark:bg-blue-900 bg-primary dark:text-blue-300'
                   : 'bg-muted  text-gray-700 dark:text-gray-300'
-              }`}>
+                }`}>
                 {isLoggedIn ? 'Identified' : 'Anonymous'}
               </span>
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">User Data</h3>
             <p className="text-sm text-muted-foreground ">
-              {isLoggedIn 
+              {isLoggedIn
                 ? 'Agents will see your full customer details'
                 : 'Agents will see you as "Guest User"'
               }
@@ -150,7 +148,7 @@ const WidgetDemo = () => {
           <h2 className="text-2xl font-bold text-foreground mb-4">
             🎯 How to Test
           </h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">
@@ -191,7 +189,7 @@ const WidgetDemo = () => {
 
           <div className="mt-6 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <span className="font-semibold">💡 Note:</span> Make sure you have an API key configured in the widget. 
+              <span className="font-semibold">💡 Note:</span> Make sure you have an API key configured in the widget.
               Update the <code className="bg-yellow-100 dark:bg-yellow-900 px-2 py-1 rounded">apiKey</code> prop below if needed.
             </p>
           </div>
@@ -200,9 +198,9 @@ const WidgetDemo = () => {
       </div>
 
       {/* Chat Widget Integration */}
-      <ChatCRMWidget 
+      <ChatCRMWidget
         apiKey={import.meta.env.VITE_CHAT_API_KEY || "test_api_key"}
-        apiUrl={import.meta.env.VITE_API_URL || "http://localhost:5000"}
+        apiUrl={import.meta.env.VITE_API_URL || "http://localhost:6010"}
         userData={isLoggedIn ? userData : null}
         primaryColor="#4F46E5"
         position="bottom-right"

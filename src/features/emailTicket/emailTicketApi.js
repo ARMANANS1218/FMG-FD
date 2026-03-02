@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 export const emailTicketApi = createApi({
   reducerPath: 'emailTicketApi',
@@ -48,9 +48,9 @@ export const emailTicketApi = createApi({
       providesTags: (result) =>
         result?.tickets
           ? [
-              ...result.tickets.map((ticket) => ({ type: 'EmailTicket', id: ticket.ticketId })),
-              { type: 'EmailTicket', id: 'LIST' },
-            ]
+            ...result.tickets.map((ticket) => ({ type: 'EmailTicket', id: ticket.ticketId })),
+            { type: 'EmailTicket', id: 'LIST' },
+          ]
           : [{ type: 'EmailTicket', id: 'LIST' }],
     }),
 

@@ -104,10 +104,17 @@ const EmailTicketDetail = lazy(() => import('../pages/private/ticketing/EmailTic
 // Customer Management
 const CustomerList = lazy(() => import('../pages/private/customer-management/CustomerList'));
 const CustomerDetails = lazy(() => import('../pages/private/customer-management/CustomerDetails'));
+
+// Product and Case Management
+const ProductList = lazy(() => import('../pages/private/product-management/ProductList'));
+const CaseList = lazy(() => import('../pages/private/case-management/CaseList'));
 // Management Pages
 const ManagementDashboard = lazy(() => import('../pages/private/management/ManagementDashboard'));
 const ManagementSalaryInvoice = lazy(() => import('../pages/private/management/SalaryInvoice'));
 const AdminSalaryInvoice = lazy(() => import('../pages/private/admin/SalaryInvoice'));
+
+// GDPR Requests
+const GdprRequests = lazy(() => import('../pages/private/admin/GdprRequests'));
 
 // ✅ Lazy load routers
 const PublicRouter = lazy(() => import('./router/PublicRouter'));
@@ -141,6 +148,9 @@ const adminChildren = [
   { path: 'profile', element: <AdminProfile /> },
   { path: 'customers', element: <CustomerList /> },
   { path: 'customers/:customerId', element: <CustomerDetails /> },
+  { path: 'gdpr-requests', element: <GdprRequests /> },
+  { path: 'products', element: <ProductList /> },
+  { path: 'cases', element: <CaseList /> },
   { path: 'shift-management', element: <ShiftManagement /> },
   { path: 'attendance-management', element: <AttendanceManagement /> },
   { path: 'holiday-management', element: <HolidayManagement /> },
@@ -191,6 +201,8 @@ const qaChildren = [
   { path: 'profile', element: <QAProfile /> },
   { path: 'customers', element: <CustomerList /> },
   { path: 'customers/:customerId', element: <CustomerDetails /> },
+  { path: 'products', element: <ProductList /> },
+  { path: 'cases', element: <CaseList /> },
   { path: 'mark-attendance', element: <AttendanceMark /> },
   { path: 'my-attendance', element: <MyAttendance /> },
   { path: 'leave-apply', element: <LeaveApply /> },
@@ -241,6 +253,8 @@ const tlChildren = [
   { path: 'profile', element: <TLProfile /> },
   { path: 'customers', element: <CustomerList /> },
   { path: 'customers/:customerId', element: <CustomerDetails /> },
+  { path: 'products', element: <ProductList /> },
+  { path: 'cases', element: <CaseList /> },
   { path: 'reports/agents-performance', element: <TLAgentPerformanceDetail /> },
   { path: 'reports/agent-activity', element: <TLAgentActivity /> },
   { path: 'mark-attendance', element: <AttendanceMark /> },
@@ -299,6 +313,8 @@ const agentChildren = [
   { path: 'profile', element: <AgentProfile /> },
   { path: 'customers', element: <CustomerList /> },
   { path: 'customers/:customerId', element: <CustomerDetails /> },
+  { path: 'products', element: <ProductList /> },
+  { path: 'cases', element: <CaseList /> },
   {
     path: 'ticketing',
     element: <InboxLayout />,
@@ -348,6 +364,7 @@ const managementChildren = [
   { path: '', index: true, element: <ManagementDashboard /> },
   { path: 'salary-invoice', element: <ManagementSalaryInvoice /> },
   { path: 'employees', element: <EmployeeList /> },
+  { path: 'gdpr-requests', element: <GdprRequests /> },
   { path: 'attendance-management', element: <AttendanceManagement /> },
   { path: 'reports/agents-performance', element: <AgentPerformanceDetail /> },
   { path: 'reports/qa-performance', element: <QAPerformanceDetail /> },

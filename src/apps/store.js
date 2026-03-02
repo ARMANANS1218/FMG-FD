@@ -19,6 +19,8 @@ import { agentPerformanceApi } from '../features/agentPerformance/agentPerforman
 import { invoiceApi } from '../features/invoice/invoiceApi';
 import { attendanceApi } from '../features/attendance/attendanceApi';
 import { fmcgReportingApi } from '../features/fmcgReporting/fmcgReportingApi';
+import { productApi } from '../features/product/productApi';
+import { caseApi } from '../features/case/caseApi';
 
 export const store = configureStore({
   reducer: {
@@ -42,6 +44,8 @@ export const store = configureStore({
     [invoiceApi.reducerPath]: invoiceApi.reducer,
     [attendanceApi.reducerPath]: attendanceApi.reducer,
     [fmcgReportingApi.reducerPath]: fmcgReportingApi.reducer,
+    [productApi.reducerPath]: productApi.reducer,
+    [caseApi.reducerPath]: caseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -64,5 +68,7 @@ export const store = configureStore({
       .concat(agentPerformanceApi.middleware)
       .concat(invoiceApi.middleware)
       .concat(attendanceApi.middleware)
-      .concat(fmcgReportingApi.middleware),
+      .concat(fmcgReportingApi.middleware)
+      .concat(productApi.middleware)
+      .concat(caseApi.middleware),
 });

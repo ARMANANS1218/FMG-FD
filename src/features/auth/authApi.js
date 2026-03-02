@@ -1,7 +1,7 @@
 // src/features/auth/authApi.js
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -76,9 +76,10 @@ export const authApi = createApi({
       }),
     }),
     toggleBreak: builder.mutation({
-      query: () => ({
+      query: (data) => ({
         url: "/break",
         method: "PUT",
+        body: data,
       }),
     }),
     acceptTerms: builder.mutation({

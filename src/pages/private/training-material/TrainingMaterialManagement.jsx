@@ -20,7 +20,7 @@ import {
 } from '../../../features/trainingMaterial/trainingMaterialApi';
 import { format } from 'date-fns';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6010';
 
 const getFileIcon = (fileType) => {
   switch (fileType) {
